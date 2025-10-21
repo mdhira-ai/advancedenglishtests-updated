@@ -1,0 +1,35 @@
+{
+  "name": "AdvancedEnglishTests - IELTS Practice",
+  "short_name": "AdvancedEnglishTests",
+  "description": "Master IELTS and English speaking with our comprehensive practice platform",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0066cc",
+  "orientation": "portrait",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["education", "learning"],
+  "icons": [
+    {
+      "src": "https://d2cy8nxnsajz6t.cloudfront.net/img/logo-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "https://d2cy8nxnsajz6t.cloudfront.net/img/logo-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "https://d2cy8nxnsajz6t.cloudfront.net/img/logo-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+   
+   
+  ]
+}

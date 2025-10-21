@@ -1,0 +1,486 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model admins {
+  id               String                   @id @default(dbgenerated("gen_random_uuid()"))
+  email            String                   @unique @db.VarChar(255)
+  passwordHash     String                   @map("password_hash")
+  role             AdminRole                @default(admin)
+  firstName        String                   @map("first_name") @db.VarChar(100)
+  lastName         String                   @map("last_name") @db.VarChar(100)
+  isActive         Boolean                  @default(true) @map("is_active")
+  createdAt        DateTime                 @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdById      String?                  @map("created_by")
+  lastLogin        DateTime?                @map("last_login") @db.Timestamptz(6)
+  otpVerifications admin_otp_verification[]
+  sessions         admin_sessions[]
+  createdBy        admins?                  @relation("AdminCreatedBy", fields: [createdById], references: [id])
+  createdAdmins    admins[]                 @relation("AdminCreatedBy")
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+  @@index([email], map: "idx_admins_email")
+  @@index([isActive], map: "idx_admins_is_active")
+}
+
+model admin_otp_verification {
+  id        String   @id @default(dbgenerated("gen_random_uuid()"))
+  adminId   String   @map("admin_id")
+  email     String   @db.VarChar(255)
+  otpCode   String   @map("otp_code") @db.VarChar(6)
+  purpose   String   @db.VarChar(50)
+  expiresAt DateTime @map("expires_at") @db.Timestamptz(6)
+  isUsed    Boolean  @default(false) @map("is_used")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  admin     admins   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([email, purpose, isUsed])
+  @@index([otpCode, expiresAt])
+  @@index([email], map: "idx_admin_otp_email")
+  @@index([expiresAt], map: "idx_admin_otp_expires")
+}
+
+model admin_sessions {
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
+  adminId      String   @map("admin_id")
+  sessionToken String   @unique @map("session_token")
+  expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  admin        admins   @relation(fields: [adminId], references: [id], onDelete: Cascade)
+
+  @@index([adminId])
+  @@index([sessionToken])
+  @@index([expiresAt])
+  @@index([expiresAt], map: "idx_admin_sessions_expires")
+  @@index([sessionToken], map: "idx_admin_sessions_token")
+}
+
+model user_presence {
+  id              String    @id
+  userId          String    @unique
+  isOnline        Boolean   @default(false)
+  lastSeen        DateTime  @db.Timestamptz(6)
+  updatedAt       DateTime  @db.Timestamptz(6)
+  in_room         Boolean   @default(false)
+  room_code       String?   @db.VarChar(20)
+  room_created_at DateTime? @db.Timestamptz(6)
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([in_room])
+  @@index([room_code])
+}
+
+model speaking_evaluation_data {
+  id                 BigInt   @id @default(autoincrement())
+  userId             String?
+  topic              String
+  questions          String
+  userAnswer         String
+  evaluationResponse String
+  recordingDuration  Int
+  urlLink            String?  @unique
+  createdAt          DateTime @default(now()) @db.Timestamptz(6)
+  isLoggedIn         Boolean? @default(false)
+  user               User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([topic])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model writing_evaluation_data {
+  id                 BigInt   @id @default(autoincrement())
+  userId             String?
+  taskType           String
+  question           String
+  userAnswer         String
+  evaluationResponse String
+  wordCount          Int?
+  urlLink            String?
+  createdAt          DateTime @default(now()) @db.Timestamptz(6)
+  isLoggedIn         Boolean? @default(false)
+  user               User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([taskType])
+  @@index([createdAt])
+  @@index([wordCount])
+  @@index([urlLink])
+}
+
+model test_scores {
+  id             BigInt   @id @default(autoincrement())
+  userId         String?
+  book           String
+  module         String
+  testNumber     Int      @map("test_number")
+  score          Int
+  totalQuestions Int?     @map("total_questions")
+  percentage     Float?
+  ieltsBandScore Float?   @map("ielts_band_score")
+  timeTaken      Int?     @map("time_taken")
+  createdAt      DateTime @default(now()) @db.Timestamptz(6)
+  user           User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([book, module, testNumber])
+  @@index([createdAt])
+  @@index([userId, module])
+  @@index([module, score])
+  @@index([ieltsBandScore])
+}
+
+model daily_test_clicks {
+  id         BigInt   @id @default(autoincrement())
+  userId     String?  @map("user_id")
+  book       String
+  module     String
+  ipAddress  String?  @map("ip_address")
+  testNumber Int      @map("test_number")
+  clickDate  DateTime @map("click_date") @db.Date
+  clickCount Int      @default(1) @map("click_count")
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([book, module, testNumber, userId, clickDate])
+  @@index([userId, clickDate])
+  @@index([book, module, testNumber])
+}
+
+model contact_form_submissions {
+  id          BigInt   @id @default(autoincrement())
+  firstName   String   @map("first_name") @db.VarChar(50)
+  lastName    String?  @map("last_name") @db.VarChar(50)
+  email       String   @db.VarChar(254)
+  subject     String   @db.VarChar(500)
+  message     String
+  inquiryType String   @map("inquiry_type") @db.VarChar(50)
+  status      String   @default("new") @db.VarChar(20)
+  responsedBy String? @map("responsed_by") 
+  response    String?
+  userId      String?  @map("user_id")
+  ipAddress   String?  @map("ip_address") @db.VarChar(45)
+  userAgent   String?  @map("user_agent")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user        User?    @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@index([inquiryType])
+  @@index([status])
+  @@index([createdAt])
+  @@index([userId])
+}
+
+model newsletter_subscriptions {
+  id                BigInt    @id @default(autoincrement())
+  email             String    @unique @db.VarChar(254)
+  status            String    @default("active") @db.VarChar(20)
+  subscriptionDate  DateTime  @default(now()) @map("subscription_date") @db.Timestamptz(6)
+  unsubscribeDate   DateTime? @map("unsubscribe_date") @db.Timestamptz(6)
+  userId            String?   @map("user_id")
+  ipAddress         String?   @map("ip_address") @db.VarChar(45)
+  userAgent         String?   @map("user_agent")
+  confirmationToken String?   @unique @map("confirmation_token") @db.VarChar(64)
+  confirmedAt       DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  user              User?     @relation(fields: [userId], references: [id])
+
+  @@index([email])
+  @@index([status])
+  @@index([subscriptionDate])
+  @@index([userId])
+  @@index([confirmationToken])
+}
+
+model otp_verifications {
+  id        BigInt   @id @default(autoincrement())
+  userId    String
+  email     String
+  otpCode   String
+  purpose   String   @default("password_reset")
+  expiresAt DateTime @map("expiresAt") @db.Timestamptz(6)
+  isUsed    Boolean  @default(false) @map("isUsed")
+  createdAt DateTime @default(now()) @map("createdAt") @db.Timestamptz(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email, purpose, isUsed])
+  @@index([otpCode, expiresAt])
+  @@index([userId])
+}
+
+model speaking_requests {
+  id          BigInt   @id @default(autoincrement())
+  sender_id   String
+  receiver_id String
+  status      String   @default("pending")
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  expires_at  DateTime @db.Timestamptz(6)
+  receiver    User     @relation("ReceivedRequests", fields: [receiver_id], references: [id], onDelete: Cascade)
+  sender      User     @relation("SentRequests", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([sender_id])
+  @@index([receiver_id])
+  @@index([status])
+  @@index([created_at])
+  @@index([expires_at])
+}
+
+model scheduled_speaking_requests {
+  id                 String    @id @default(dbgenerated("gen_random_uuid()"))
+  sender_id          String
+  receiver_id        String
+  scheduled_date     DateTime  @db.Date
+  scheduled_time     DateTime  @db.Time(6)
+  scheduled_datetime DateTime? @db.Timestamptz(6)
+  timezone           String    @default("UTC") @db.VarChar(100)
+  status             String    @default("pending") @db.VarChar(20)
+  message            String?
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  responded_at       DateTime? @db.Timestamptz(6)
+  sender_ready_at    DateTime? @db.Timestamptz(6)
+  receiver_ready_at  DateTime? @db.Timestamptz(6)
+  started_at         DateTime? @db.Timestamptz(6)
+  completed_at       DateTime? @db.Timestamptz(6)
+  room_code          String?   @db.VarChar(20)
+  expires_at         DateTime? @db.Timestamptz(6)
+  receiver           User      @relation("ScheduledReceivedRequests", fields: [receiver_id], references: [id], onDelete: Cascade)
+  sender             User      @relation("ScheduledSentRequests", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([sender_id])
+  @@index([receiver_id])
+  @@index([status])
+  @@index([scheduled_datetime])
+  @@index([created_at])
+  @@index([expires_at])
+}
+
+model speaking_rooms {
+  id                   String                       @id @default(dbgenerated("gen_random_uuid()"))
+  room_code            String                       @unique @db.VarChar(20)
+  creator_id           String
+  status               String                       @default("active") @db.VarChar(20)
+  created_at           DateTime                     @default(now()) @db.Timestamptz(6)
+  started_at           DateTime?                    @db.Timestamptz(6)
+  ended_at             DateTime?                    @db.Timestamptz(6)
+  duration_seconds     Int?                         @default(0)
+  agora_channel_name   String?                      @db.VarChar(100)
+  max_participants     Int                          @default(10)
+  room_type            String                       @default("instant") @db.VarChar(20)
+  scheduled_request_id String?                      @unique
+  invitations          speaking_room_invitations[]
+  room_likes           speaking_room_likes[]
+  participants         speaking_room_participants[]
+  creator              User                         @relation("CreatedRooms", fields: [creator_id], references: [id], onDelete: Cascade)
+
+  @@index([room_code])
+  @@index([creator_id])
+  @@index([status])
+  @@index([created_at])
+  @@index([agora_channel_name])
+  @@index([room_type])
+}
+
+model speaking_room_participants {
+  id        String         @id @default(dbgenerated("gen_random_uuid()"))
+  room_id   String
+  user_id   String
+  role      String         @default("participant") @db.VarChar(20)
+  joined_at DateTime       @default(now()) @db.Timestamptz(6)
+  left_at   DateTime?      @db.Timestamptz(6)
+  is_online Boolean        @default(true)
+  invite_id String?
+  room      speaking_rooms @relation(fields: [room_id], references: [id], onDelete: Cascade)
+  user      User           @relation("RoomParticipants", fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([room_id, user_id])
+  @@index([room_id])
+  @@index([user_id])
+  @@index([joined_at])
+  @@index([role])
+  @@index([is_online])
+}
+
+model speaking_room_likes {
+  id            String         @id @default(dbgenerated("gen_random_uuid()"))
+  room_id       String
+  liker_id      String
+  liked_user_id String
+  created_at    DateTime       @default(now()) @db.Timestamptz(6)
+  liked_user    User           @relation("ReceivedLikes", fields: [liked_user_id], references: [id], onDelete: Cascade)
+  liker         User           @relation("GivenLikes", fields: [liker_id], references: [id], onDelete: Cascade)
+  room          speaking_rooms @relation(fields: [room_id], references: [id], onDelete: Cascade)
+
+  @@unique([room_id, liker_id, liked_user_id])
+  @@index([room_id])
+  @@index([liker_id])
+  @@index([liked_user_id])
+  @@index([created_at])
+}
+
+model speaking_room_invitations {
+  id           String         @id @default(dbgenerated("gen_random_uuid()"))
+  room_id      String
+  inviter_id   String
+  invitee_id   String
+  status       String         @default("pending") @db.VarChar(20)
+  created_at   DateTime       @default(now()) @db.Timestamptz(6)
+  expires_at   DateTime       @db.Timestamptz(6)
+  responded_at DateTime?      @db.Timestamptz(6)
+  message      String?
+  invitee      User           @relation("ReceivedRoomInvitations", fields: [invitee_id], references: [id], onDelete: Cascade)
+  inviter      User           @relation("SentRoomInvitations", fields: [inviter_id], references: [id], onDelete: Cascade)
+  room         speaking_rooms @relation(fields: [room_id], references: [id], onDelete: Cascade)
+
+  @@unique([room_id, invitee_id])
+  @@index([room_id])
+  @@index([inviter_id])
+  @@index([invitee_id])
+  @@index([status])
+  @@index([created_at])
+  @@index([expires_at])
+}
+
+model speaking_room_messages {
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
+  room_code    String   @db.VarChar(20)
+  sender_id    String
+  receiver_id  String?
+  message_text String
+  message_type String   @default("text") @db.VarChar(20)
+  is_private   Boolean  @default(false)
+  is_read      Boolean  @default(false)
+  created_at   DateTime @default(now()) @db.Timestamptz(6)
+  receiver     User?    @relation("ReceivedMessages", fields: [receiver_id], references: [id], onDelete: Cascade)
+  sender       User     @relation("SentMessages", fields: [sender_id], references: [id], onDelete: Cascade)
+
+  @@index([room_code])
+  @@index([sender_id])
+  @@index([receiver_id])
+  @@index([created_at])
+  @@index([is_private])
+  @@index([is_read])
+}
+
+model User {
+  id                        String                        @id
+  name                      String
+  email                     String                        @unique
+  emailVerified             Boolean                       @default(false)
+  image                     String?
+  createdAt                 DateTime                      @db.Timestamptz(6)
+  updatedAt                 DateTime                      @updatedAt @db.Timestamptz(6)
+  gender                    String?
+  passwordHash              String?                       @map("password_hash")
+  accounts                  Account[]
+  contactSubmissions        contact_form_submissions[]
+  dailyTestClicks           daily_test_clicks[]
+  newsletterSubscriptions   newsletter_subscriptions[]
+  otpVerifications          otp_verifications[]
+  scheduledReceivedRequests scheduled_speaking_requests[] @relation("ScheduledReceivedRequests")
+  scheduledSentRequests     scheduled_speaking_requests[] @relation("ScheduledSentRequests")
+  sessions                  Session[]
+  speakingEvaluations       speaking_evaluation_data[]
+  receivedRequests          speaking_requests[]           @relation("ReceivedRequests")
+  sentRequests              speaking_requests[]           @relation("SentRequests")
+  receivedRoomInvitations   speaking_room_invitations[]   @relation("ReceivedRoomInvitations")
+  sentRoomInvitations       speaking_room_invitations[]   @relation("SentRoomInvitations")
+  receivedLikes             speaking_room_likes[]         @relation("ReceivedLikes")
+  givenLikes                speaking_room_likes[]         @relation("GivenLikes")
+  receivedMessages          speaking_room_messages[]      @relation("ReceivedMessages")
+  sentMessages              speaking_room_messages[]      @relation("SentMessages")
+  roomParticipations        speaking_room_participants[]  @relation("RoomParticipants")
+  createdRooms              speaking_rooms[]              @relation("CreatedRooms")
+  testScores                test_scores[]
+  userPresence              user_presence?
+  writingEvaluations        writing_evaluation_data[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("account")
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+
+  @@map("verification")
+}
+
+model visitors {
+  id          BigInt   @id @default(autoincrement())
+  ipAddress   String   @unique @map("ip_address") @db.VarChar(45)
+  countryName String?  @map("country_name") @db.VarChar(100)
+  countryCode String?  @map("country_code") @db.VarChar(2)
+  city        String?  @db.VarChar(100)
+  region      String?  @db.VarChar(100)
+  currentPage String?  @map("current_page") @db.VarChar(500)
+  userAgent   String?  @map("user_agent")
+  visitCount  Int      @default(1) @map("visit_count")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  lastUpdated DateTime @default(now()) @updatedAt @map("last_updated") @db.Timestamptz(6)
+
+  @@index([ipAddress])
+  @@index([countryName])
+  @@index([createdAt])
+  @@index([lastUpdated])
+  @@index([currentPage])
+}
+
+enum AdminRole {
+  admin
+  super_admin
+  moderator
+
+  @@map("admin_role")
+}
