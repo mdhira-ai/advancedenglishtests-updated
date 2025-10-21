@@ -6,7 +6,7 @@ import { getEmailVerificationTemplate, getPasswordResetTemplate, getWelcomeEmail
 const prisma = new PrismaClient();
 
 export const auth = betterAuth({
-  
+  trustedOrigins: [process.env.NEXT_PUBLIC_SITE_URL as string],
   database: prismaAdapter(prisma, {
     debugLogs: false,
     provider: "postgresql", // or "mysql", "postgresql", ...etc
