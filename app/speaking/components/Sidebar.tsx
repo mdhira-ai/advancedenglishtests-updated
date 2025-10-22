@@ -3,7 +3,7 @@ import { CalendarDays, Inbox, MessageSquare, Send, Users } from "lucide-react"
 import { useMemo } from "react";
 
 const Sidebar = () => {
-    const { users } = useSpeakingPage();
+    const { users, TotalUsersInDatabase } = useSpeakingPage();
 
     const userStats = useMemo(() => {
         return users.reduce(
@@ -43,7 +43,7 @@ const Sidebar = () => {
                             <div className="text-center p-2 lg:p-3 rounded-lg" style={{ backgroundColor: '#e8f2ff' }}>
                                 <Users className="h-5 w-5 lg:h-6 lg:w-6 mx-auto mb-1" style={{ color: '#1A3A6E' }} />
                                 <p className="text-base lg:text-lg font-bold" style={{ color: '#1A3A6E' }}>
-                                    {userStats.total}
+                                    {TotalUsersInDatabase}
                                 </p>
                                 <p className="text-xs text-gray-600">Available</p>
                             </div>

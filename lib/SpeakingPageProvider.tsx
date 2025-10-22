@@ -26,6 +26,7 @@ const SpeakingPageContext = createContext<{
     loadmore: () => void;
     loading: boolean;
     hasMore: boolean;
+    TotalUsersInDatabase: number;
 
 
 } | null>(null);
@@ -47,13 +48,40 @@ export const SpeakingPageProvider = ({
     const [hasMore, setHasMore] = useState(true);
     const [loading, setLoading] = useState(false);
 
+    const [TotalUsersInDatabase, setTotalUsersInDatabase] = useState(0);
+
     useEffect(() => {
         if (session?.user) {
             setUserId(session.user.id);
         }
     }, [session]);
 
+
+    async function TotalUsers(){
+
+        // count total users in database
+        const { count, error } = await supabase
+            .from("user") // Replace with your table name
+            .select("*", { count: 'exact', head: true}); // Use head: true to get only the count
+
+           
+
+
+        if (error) {
+            console.error("Error fetching total users:", error.message);
+            return 0;
+        }
+        if (count) {
+            setTotalUsersInDatabase(count);
+        }
+
+
+    }
+
+
+
     const fetchUsers = async (currentPage: any) => {
+        await TotalUsers();
         setLoading(true);
         const from = currentPage * ITEMS_PER_PAGE;
         const to = from + ITEMS_PER_PAGE - 1;
@@ -152,7 +180,7 @@ export const SpeakingPageProvider = ({
 
 
     return (
-        <SpeakingPageContext.Provider value={{ fetchUsers, users, loadmore, loading, hasMore }}>
+        <SpeakingPageContext.Provider value={{ fetchUsers, users, loadmore, loading, hasMore, TotalUsersInDatabase }}>
             {children}
         </SpeakingPageContext.Provider>
     );

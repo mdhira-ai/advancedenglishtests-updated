@@ -5,7 +5,7 @@ import { useMemo } from "react";
 
 const UserStatistics = () => {
 
-    const { users } = useSpeakingPage();
+    const { users, TotalUsersInDatabase } = useSpeakingPage();
 
     const userStats = useMemo(() => {
         return users.reduce(

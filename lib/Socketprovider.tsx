@@ -17,7 +17,16 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     useEffect(() => {
-        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL as string);
+        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL as string,{
+            path: '/socket.io',
+            secure: true,
+            // Add connection options for better handling of network changes
+            autoConnect: true,
+            reconnection: true,
+            reconnectionDelay: 1000,
+            reconnectionAttempts: 5,
+            timeout: 20000,
+        });
         setSocket(newSocket);
 
         return () => {
