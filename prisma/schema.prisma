@@ -11,7 +11,7 @@ datasource db {
 
 model admins {
   id               String                   @id @default(dbgenerated("gen_random_uuid()"))
-  email            String                   @unique @db.VarChar(255)
+  email            String                   @db.VarChar(255)
   passwordHash     String                   @map("password_hash")
   role             AdminRole                @default(admin)
   firstName        String                   @map("first_name") @db.VarChar(100)
@@ -55,7 +55,7 @@ model admin_otp_verification {
 model admin_sessions {
   id           String   @id @default(dbgenerated("gen_random_uuid()"))
   adminId      String   @map("admin_id")
-  sessionToken String   @unique @map("session_token")
+  sessionToken String   @map("session_token")
   expiresAt    DateTime @map("expires_at") @db.Timestamptz(6)
   createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   ipAddress    String?  @map("ip_address")
@@ -78,6 +78,7 @@ model user_presence {
   in_room         Boolean   @default(false)
   room_code       String?   @db.VarChar(20)
   room_created_at DateTime? @db.Timestamptz(6)
+  socketID        String?   @db.VarChar(100)
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([in_room])
@@ -85,14 +86,14 @@ model user_presence {
 }
 
 model speaking_evaluation_data {
-  id                 BigInt   @id @default(autoincrement())
+  id                 BigInt   @id
   userId             String?
   topic              String
   questions          String
   userAnswer         String
   evaluationResponse String
   recordingDuration  Int
-  urlLink            String?  @unique
+  urlLink            String?
   createdAt          DateTime @default(now()) @db.Timestamptz(6)
   isLoggedIn         Boolean? @default(false)
   user               User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -103,7 +104,7 @@ model speaking_evaluation_data {
 }
 
 model writing_evaluation_data {
-  id                 BigInt   @id @default(autoincrement())
+  id                 BigInt   @id
   userId             String?
   taskType           String
   question           String
@@ -122,7 +123,7 @@ model writing_evaluation_data {
 }
 
 model test_scores {
-  id             BigInt   @id @default(autoincrement())
+  id             BigInt   @id
   userId         String?
   book           String
   module         String
@@ -144,7 +145,7 @@ model test_scores {
 }
 
 model daily_test_clicks {
-  id         BigInt   @id @default(autoincrement())
+  id         BigInt   @id
   userId     String?  @map("user_id")
   book       String
   module     String
@@ -155,13 +156,12 @@ model daily_test_clicks {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@unique([book, module, testNumber, userId, clickDate])
   @@index([userId, clickDate])
   @@index([book, module, testNumber])
 }
 
 model contact_form_submissions {
-  id          BigInt   @id @default(autoincrement())
+  id          BigInt   @id
   firstName   String   @map("first_name") @db.VarChar(50)
   lastName    String?  @map("last_name") @db.VarChar(50)
   email       String   @db.VarChar(254)
@@ -169,13 +169,13 @@ model contact_form_submissions {
   message     String
   inquiryType String   @map("inquiry_type") @db.VarChar(50)
   status      String   @default("new") @db.VarChar(20)
-  responsedBy String? @map("responsed_by") 
-  response    String?
   userId      String?  @map("user_id")
   ipAddress   String?  @map("ip_address") @db.VarChar(45)
   userAgent   String?  @map("user_agent")
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  response    String?
+  responsedBy String?  @map("responsed_by")
   user        User?    @relation(fields: [userId], references: [id])
 
   @@index([email])
@@ -186,15 +186,15 @@ model contact_form_submissions {
 }
 
 model newsletter_subscriptions {
-  id                BigInt    @id @default(autoincrement())
-  email             String    @unique @db.VarChar(254)
+  id                BigInt    @id
+  email             String    @db.VarChar(254)
   status            String    @default("active") @db.VarChar(20)
   subscriptionDate  DateTime  @default(now()) @map("subscription_date") @db.Timestamptz(6)
   unsubscribeDate   DateTime? @map("unsubscribe_date") @db.Timestamptz(6)
   userId            String?   @map("user_id")
   ipAddress         String?   @map("ip_address") @db.VarChar(45)
   userAgent         String?   @map("user_agent")
-  confirmationToken String?   @unique @map("confirmation_token") @db.VarChar(64)
+  confirmationToken String?   @map("confirmation_token") @db.VarChar(64)
   confirmedAt       DateTime? @map("confirmed_at") @db.Timestamptz(6)
   createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -208,7 +208,7 @@ model newsletter_subscriptions {
 }
 
 model otp_verifications {
-  id        BigInt   @id @default(autoincrement())
+  id        BigInt   @id
   userId    String
   email     String
   otpCode   String
@@ -224,7 +224,7 @@ model otp_verifications {
 }
 
 model speaking_requests {
-  id          BigInt   @id @default(autoincrement())
+  id          BigInt   @id
   sender_id   String
   receiver_id String
   status      String   @default("pending")
@@ -272,7 +272,7 @@ model scheduled_speaking_requests {
 
 model speaking_rooms {
   id                   String                       @id @default(dbgenerated("gen_random_uuid()"))
-  room_code            String                       @unique @db.VarChar(20)
+  room_code            String                       @db.VarChar(20)
   creator_id           String
   status               String                       @default("active") @db.VarChar(20)
   created_at           DateTime                     @default(now()) @db.Timestamptz(6)
@@ -282,7 +282,7 @@ model speaking_rooms {
   agora_channel_name   String?                      @db.VarChar(100)
   max_participants     Int                          @default(10)
   room_type            String                       @default("instant") @db.VarChar(20)
-  scheduled_request_id String?                      @unique
+  scheduled_request_id String?
   invitations          speaking_room_invitations[]
   room_likes           speaking_room_likes[]
   participants         speaking_room_participants[]
@@ -308,7 +308,6 @@ model speaking_room_participants {
   room      speaking_rooms @relation(fields: [room_id], references: [id], onDelete: Cascade)
   user      User           @relation("RoomParticipants", fields: [user_id], references: [id], onDelete: Cascade)
 
-  @@unique([room_id, user_id])
   @@index([room_id])
   @@index([user_id])
   @@index([joined_at])
@@ -326,7 +325,6 @@ model speaking_room_likes {
   liker         User           @relation("GivenLikes", fields: [liker_id], references: [id], onDelete: Cascade)
   room          speaking_rooms @relation(fields: [room_id], references: [id], onDelete: Cascade)
 
-  @@unique([room_id, liker_id, liked_user_id])
   @@index([room_id])
   @@index([liker_id])
   @@index([liked_user_id])
@@ -347,7 +345,6 @@ model speaking_room_invitations {
   inviter      User           @relation("SentRoomInvitations", fields: [inviter_id], references: [id], onDelete: Cascade)
   room         speaking_rooms @relation(fields: [room_id], references: [id], onDelete: Cascade)
 
-  @@unique([room_id, invitee_id])
   @@index([room_id])
   @@index([inviter_id])
   @@index([invitee_id])
@@ -380,7 +377,7 @@ model speaking_room_messages {
 model User {
   id                        String                        @id
   name                      String
-  email                     String                        @unique
+  email                     String
   emailVerified             Boolean                       @default(false)
   image                     String?
   createdAt                 DateTime                      @db.Timestamptz(6)
@@ -415,10 +412,10 @@ model User {
 
 model Session {
   id        String   @id
-  expiresAt DateTime
-  token     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  expiresAt DateTime @db.Timestamp(6)
+  token     String
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @updatedAt @db.Timestamp(6)
   ipAddress String?
   userAgent String?
   userId    String
@@ -435,12 +432,12 @@ model Account {
   accessToken           String?
   refreshToken          String?
   idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
+  accessTokenExpiresAt  DateTime? @db.Timestamp(6)
+  refreshTokenExpiresAt DateTime? @db.Timestamp(6)
   scope                 String?
   password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
+  createdAt             DateTime  @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime  @updatedAt @db.Timestamp(6)
   user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("account")
@@ -450,16 +447,16 @@ model Verification {
   id         String   @id
   identifier String
   value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @default(now()) @updatedAt
+  expiresAt  DateTime @db.Timestamp(6)
+  createdAt  DateTime @default(now()) @db.Timestamp(6)
+  updatedAt  DateTime @default(now()) @updatedAt @db.Timestamp(6)
 
   @@map("verification")
 }
 
 model visitors {
-  id          BigInt   @id @default(autoincrement())
-  ipAddress   String   @unique @map("ip_address") @db.VarChar(45)
+  id          BigInt   @id
+  ipAddress   String   @map("ip_address") @db.VarChar(45)
   countryName String?  @map("country_name") @db.VarChar(100)
   countryCode String?  @map("country_code") @db.VarChar(2)
   city        String?  @db.VarChar(100)
@@ -478,9 +475,8 @@ model visitors {
 }
 
 enum AdminRole {
-  admin
   super_admin
-  moderator
+  admin
 
   @@map("admin_role")
 }

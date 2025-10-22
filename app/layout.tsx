@@ -10,6 +10,8 @@ import { Analytics } from '@vercel/analytics/next';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import SpeakingNotificationListener from "@/components/others/SpeakingNotificationListener";
+import { SocketProvider } from "@/lib/Socketprovider";
+import { SpeakingPageProvider } from "@/lib/SpeakingPageProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -61,7 +63,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <head>
 
-          {/* Google tag (gtag.js) */}
+        {/* Google tag (gtag.js) */}
         <script async src="https://www.googletagmanager.com/gtag/js?id=G-JKNTYPTNX2"></script>
         <script
           dangerouslySetInnerHTML={{
@@ -114,15 +116,20 @@ export default function RootLayout({
         <ToastContainer />
 
         <VisitorTrackingProvider>
-          <PresenceProvider>
-            <SpeakingNotificationListener />
-            <Navigation />
-            {children}
+          <SpeakingPageProvider>
+            <SocketProvider>
 
-            <Analytics />
-            
-            <Footer />
-          </PresenceProvider>
+              {/* <PresenceProvider> */}
+              <SpeakingNotificationListener />
+              <Navigation />
+              {children}
+
+              <Analytics />
+
+              <Footer />
+              {/* </PresenceProvider> */}
+            </SocketProvider>
+          </SpeakingPageProvider>
         </VisitorTrackingProvider>
 
       </body>
