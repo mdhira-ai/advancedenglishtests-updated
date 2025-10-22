@@ -9,6 +9,8 @@ import dayjs from "dayjs"; // ES 2015
 import relativeTime from "dayjs/plugin/relativeTime"; // ES 2015
 import { useSession } from "@/lib/auth-client";
 import { useEffect, useMemo } from "react";
+import ConnectBtn from "./ConnectBtn";
+import Schedulebtn from "./Schedulebtn";
 dayjs.extend(relativeTime);
 dayjs().format();
 
@@ -32,7 +34,7 @@ const UsersGrid = () => {
     }, [users, session?.user?.id]);
 
 
-   
+
 
 
 
@@ -154,20 +156,9 @@ const UsersGrid = () => {
 
                                     {user.user?.id !== session?.user?.id && (
                                         user.isOnline ? (
-                                            <Button
-                                                size="sm"
-                                                className="w-full h-8 text-xs font-medium rounded bg-blue-600 text-white hover:bg-blue-700"
-                                            >
-                                                Connect
-                                            </Button>
+                                            <ConnectBtn />
                                         ) : (
-                                            <Button
-                                                size="sm"
-                                                variant="outline"
-                                                className="w-full h-7 text-xs font-medium border border-blue-200 text-blue-600 hover:bg-blue-50"
-                                            >
-                                                Schedule
-                                            </Button>
+                                            <Schedulebtn />
                                         )
                                     )}
 
