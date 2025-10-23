@@ -155,8 +155,12 @@ const UsersGrid = () => {
 
 
                                     {user.user?.id !== session?.user?.id && (
-                                        user.isOnline ? (
-                                            <ConnectBtn />
+                                        user.isOnline ? ( 
+                                            <ConnectBtn
+                                                remotePeerId={user.peerID}
+                                                remoteUserId={user.user?.id}
+
+                                            />
                                         ) : (
                                             <Schedulebtn />
                                         )

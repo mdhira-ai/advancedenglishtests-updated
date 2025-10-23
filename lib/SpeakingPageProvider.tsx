@@ -9,7 +9,9 @@ interface UsersData {
     isOnline: boolean;
     lastSeen: string;
     updatedAt: string;
+    call_status: string | null;
     in_room: boolean;
+    peerID: string ;
     room_code: string | null;
     room_created_at: string | null;
     user: {

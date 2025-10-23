@@ -77,8 +77,10 @@ model user_presence {
   updatedAt       DateTime  @db.Timestamptz(6)
   in_room         Boolean   @default(false)
   room_code       String?   @db.VarChar(20)
+  call_status     String?   @db.VarChar(20)
   room_created_at DateTime? @db.Timestamptz(6)
   socketID        String?   @db.VarChar(100)
+  peerID          String?   @db.VarChar(100)
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([in_room])

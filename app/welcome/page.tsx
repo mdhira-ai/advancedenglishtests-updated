@@ -12,10 +12,10 @@ const page = () => {
   const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
-    if (!isPending && !error && !session) {
+    if (!session) {
       router.replace("/login");
     }
-  }, [session, isPending, error, router]);
+  }, [session, router]);
 
   useEffect(() => {
     if (session && !emailSent) {

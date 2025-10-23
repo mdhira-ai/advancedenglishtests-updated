@@ -7,6 +7,10 @@ import { useSession } from "./auth-client";
 const SocketContext = createContext<{
     socket: any;
     SignoutEmit: () => void;
+    onCallRejected: (callback: (data: any) => void) => void;
+    offCallRejected: (callback: (data: any) => void) => void;
+    onCallCancelled: (callback: (data: any) => void) => void; // Add this
+    offCallCancelled: (callback: (data: any) => void) => void;
 } | null>(null);
 
 
@@ -17,7 +21,7 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     useEffect(() => {
-        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL as string,{
+        const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL as string, {
             path: '/socket.io',
             secure: true,
             // Add connection options for better handling of network changes
@@ -41,10 +45,12 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
             console.log("Socket connected");
         });
 
+
         if (session?.user) {
             socket.emit("join", { userId: session.user.id });
             console.log(`User ${session.user.id} joined socket room, socket id: ${socket.id}`);
         }
+
 
         socket.on("disconnect", () => {
             console.log("Socket disconnected");
@@ -57,9 +63,34 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
     }, [socket, session]);
 
 
+    // Helper functions to manage call-cancelled listeners
+    const onCallCancelled = (callback: (data: any) => void) => {
+        if (socket) {
+            socket.on("call-cancelled", callback);
+        }
+    };
+
+    const offCallCancelled = (callback: (data: any) => void) => {
+        if (socket) {
+            socket.off("call-cancelled", callback);
+        }
+    };
+
+    // Helper functions to manage call-rejected listeners
+    const onCallRejected = (callback: (data: any) => void) => {
+        if (socket) {
+            socket.on("call-rejected", callback);
+        }
+    };
+
+    const offCallRejected = (callback: (data: any) => void) => {
+        if (socket) {
+            socket.off("call-rejected", callback);
+        }
+    };
 
 
-    function SignoutEmit(){
+    function SignoutEmit() {
         if (socket && session?.user) {
             socket.emit("signout", { userId: session.user.id });
             console.log(`User ${session.user.id} signed out, socket id: ${socket.id}`);
@@ -68,7 +99,10 @@ export const SocketProvider = ({ children }: { children: React.ReactNode }) => {
 
 
     return (
-        <SocketContext.Provider value={{ socket, SignoutEmit }}>
+        <SocketContext.Provider value={{
+            socket, SignoutEmit, onCallRejected, offCallRejected, onCallCancelled,
+            offCallCancelled
+        }}>
             {children}
         </SocketContext.Provider>
     );

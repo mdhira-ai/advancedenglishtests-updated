@@ -12,6 +12,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import SpeakingNotificationListener from "@/components/others/SpeakingNotificationListener";
 import { SocketProvider } from "@/lib/Socketprovider";
 import { SpeakingPageProvider } from "@/lib/SpeakingPageProvider";
+import { PeerProvider } from "@/lib/PeerProvider";
+import Callcontrol from "@/components/callcontrol";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -118,16 +120,20 @@ export default function RootLayout({
         <VisitorTrackingProvider>
           <SpeakingPageProvider>
             <SocketProvider>
+              <PeerProvider>
 
-              {/* <PresenceProvider> */}
-              <SpeakingNotificationListener />
-              <Navigation />
-              {children}
+                <Callcontrol />
+                {/* <PresenceProvider> */}
+                <SpeakingNotificationListener />
+                <Navigation />
+                {children}
 
-              <Analytics />
+                <Analytics />
 
-              <Footer />
-              {/* </PresenceProvider> */}
+                <Footer />
+                {/* </PresenceProvider> */}
+              </PeerProvider>
+
             </SocketProvider>
           </SpeakingPageProvider>
         </VisitorTrackingProvider>
