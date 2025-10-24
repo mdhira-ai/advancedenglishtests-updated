@@ -1,5 +1,6 @@
 import { useSpeakingPage } from "@/lib/SpeakingPageProvider";
 import { CalendarDays, Inbox, MessageSquare, Send, Users } from "lucide-react"
+import Link from "next/link";
 import { useMemo } from "react";
 
 const Sidebar = () => {
@@ -60,7 +61,7 @@ const Sidebar = () => {
                     {/* Navigation */}
                     <div className="p-4 lg:p-6 space-y-2 lg:space-y-3">
                         {/* Incoming Requests */}
-                        <button className="w-full flex items-center justify-between p-2 lg:p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
+                        {/* <button className="w-full flex items-center justify-between p-2 lg:p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-center space-x-2 lg:space-x-3">
                                 <div className="p-1.5 lg:p-2 bg-red-100 rounded-lg">
                                     <Inbox className="h-4 w-4 lg:h-5 lg:w-5 text-red-600" />
@@ -70,10 +71,10 @@ const Sidebar = () => {
                                     <p className="text-xs lg:text-sm text-gray-600 hidden lg:block">People want to speak</p>
                                 </div>
                             </div>
-                        </button>
+                        </button> */}
 
                         {/* Sent Requests */}
-                        <button className="w-full flex items-center justify-between p-2 lg:p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
+                        {/* <button className="w-full flex items-center justify-between p-2 lg:p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-center space-x-2 lg:space-x-3">
                                 <div className="p-1.5 lg:p-2 rounded-lg" style={{ backgroundColor: '#e8f2ff' }}>
                                     <Send className="h-4 w-4 lg:h-5 lg:w-5" style={{ color: '#1A3A6E' }} />
@@ -83,10 +84,12 @@ const Sidebar = () => {
                                     <p className="text-xs lg:text-sm text-gray-600 hidden lg:block">Waiting for response</p>
                                 </div>
                             </div>
-                        </button>
+                        </button> */}
 
                         {/* Scheduled Sessions */}
-                        <button className="w-full flex items-center justify-between p-2 lg:p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
+                        <Link
+                            href="/speaking/ScheduleSession"
+                            className="w-full flex items-center justify-between p-2 lg:p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-center space-x-2 lg:space-x-3">
                                 <div className="p-1.5 lg:p-2 bg-blue-100 rounded-lg">
                                     <CalendarDays className="h-4 w-4 lg:h-5 lg:w-5 text-blue-600" />
@@ -96,7 +99,7 @@ const Sidebar = () => {
                                     <p className="text-xs lg:text-sm text-gray-600 hidden lg:block">Your upcoming sessions</p>
                                 </div>
                             </div>
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </div>

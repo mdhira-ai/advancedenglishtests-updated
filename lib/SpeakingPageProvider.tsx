@@ -3,7 +3,7 @@ import { createContext, useContext, useEffect, useState } from "react";
 import { useSession } from "./auth-client";
 import { supabase } from "./supabase";
 
-interface UsersData {
+export interface UsersData {
     id: string;
     userId: string;
     isOnline: boolean;

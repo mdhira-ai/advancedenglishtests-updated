@@ -408,6 +408,10 @@ model User {
   testScores                test_scores[]
   userPresence              user_presence?
   writingEvaluations        writing_evaluation_data[]
+  speakingSessionsAsBooker  schedule_sessions[]           @relation("BookedSessions")
+  speakingSessionsAsParticipant schedule_sessions[]       @relation("ParticipantSessions")
+  schedule_session_confirmations schedule_session_confirmations[] @relation("SessionConfirmations")
+  
 
   @@map("user")
 }
@@ -481,4 +485,84 @@ enum AdminRole {
   admin
 
   @@map("admin_role")
+}
+
+
+// Add this new model to your existing schema
+model schedule_sessions {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()"))
+  bookerId              String    @map("booker_id")
+  participantId         String    @map("participant_id")
+  
+  // Store in UTC, display in local timezones
+  scheduledAtUtc        DateTime  @map("scheduled_at_utc") @db.Timestamptz(6)
+  durationMinutes       Int?       @default(60) @map("duration_minutes")
+  
+  // Store original timezone info for reference
+  bookerTimezone        String?    @map("booker_timezone") @db.VarChar(100)
+  participantTimezone   String?    @map("participant_timezone") @db.VarChar(100)
+  
+  // Session details
+  title                 String?   @db.VarChar(255)
+  description           String?
+  meetingLink           String?   @map("meeting_link") @db.VarChar(500)
+  
+  // Status tracking
+  status                String    @default("scheduled") @db.VarChar(50)
+  confirmationToken     String?   @unique @map("confirmation_token") @db.VarChar(255)
+  
+  // Email tracking
+  emailSentAt           DateTime? @map("email_sent_at") @db.Timestamptz(6)
+  reminderSentAt        DateTime? @map("reminder_sent_at") @db.Timestamptz(6)
+  confirmedAt           DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  
+  // Relations
+  booker                User      @relation("BookedSessions", fields: [bookerId], references: [id], onDelete: Cascade)
+  participant           User      @relation("ParticipantSessions", fields: [participantId], references: [id], onDelete: Cascade)
+  confirmations         schedule_session_confirmations[]
+  emailLogs             email_logs[]
+
+  @@index([bookerId])
+  @@index([participantId])
+  @@index([status])
+  @@index([scheduledAtUtc])
+  @@index([createdAt])
+  @@index([confirmationToken])
+}
+
+model schedule_session_confirmations {
+  id                      String    @id @default(dbgenerated("gen_random_uuid()"))
+  sessionId               String    @map("session_id")
+  userId                  String    @map("user_id")
+  confirmedAt             DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  timezoneAtConfirmation  String?   @map("timezone_at_confirmation") @db.VarChar(100)
+  confirmationMethod      String?   @map("confirmation_method") @db.VarChar(50)
+
+  schedule_sessions       schedule_sessions  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user                    User      @relation("SessionConfirmations", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([sessionId, userId])
+  @@index([sessionId])
+  @@index([userId])
+}
+
+model email_logs {
+  id                String   @id @default(dbgenerated("gen_random_uuid()"))
+  sessionId         String?  @map("session_id")
+  recipientEmail    String   @map("recipient_email") @db.VarChar(255)
+  emailType         String   @map("email_type") @db.VarChar(50)
+  sentAt            DateTime @default(now()) @map("sent_at") @db.Timestamptz(6)
+  recipientTimezone String?  @map("recipient_timezone") @db.VarChar(100)
+  localTimeInEmail  String?  @map("local_time_in_email")
+  status            String   @default("sent") @db.VarChar(50)
+
+  schedule_sessions schedule_sessions? @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId])
+  @@index([sentAt])
+  @@index([emailType])
+  @@index([recipientEmail])
 }

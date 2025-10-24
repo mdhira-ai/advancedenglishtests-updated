@@ -40,7 +40,7 @@ const page = () => {
         <div className="min-h-screen bg-gray-50">
             <div className="flex lg:min-h-screen">
                 {/* Sidebar - Hidden on mobile */}
-                <Sidebar />
+                {/* <Sidebar /> */}
 
                 {/* Main Content Area */}
                 <div className="flex flex-col flex-1 lg:w-0">

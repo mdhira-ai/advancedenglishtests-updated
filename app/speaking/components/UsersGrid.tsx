@@ -162,7 +162,7 @@ const UsersGrid = () => {
 
                                             />
                                         ) : (
-                                            <Schedulebtn />
+                                            <Schedulebtn userDetails={user}/>
                                         )
                                     )}
 
