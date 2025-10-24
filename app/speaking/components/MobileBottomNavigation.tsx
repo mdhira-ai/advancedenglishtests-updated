@@ -31,7 +31,7 @@ const MobileBottomNavigation = () => {
 
                             {/* Scheduled Sessions */}
                             <Link
-                                href="/speaking/schedulesession"
+                                href="/speaking/schedule-session"
                                 className="flex flex-col items-center py-3 sm:py-3 px-2 text-center text-blue-600 hover:bg-gray-50 active:bg-gray-100 transition-colors">
                                 <div className="relative">
                                     <CalendarDays className="h-6 w-6 sm:h-7 sm:w-7 mb-1 sm:mb-1" />
