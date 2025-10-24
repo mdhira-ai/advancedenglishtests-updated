@@ -2,10 +2,11 @@
 import FullCalendar from '@fullcalendar/react'
 import dayGridPlugin from '@fullcalendar/daygrid' // a plugin!
 import { useSession } from '@/lib/auth-client';
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Loading from '../loading';
 import ShowDialog from './components/ShowDialog';
+import { useRouter } from 'next/navigation';
 
 
 
@@ -26,12 +27,32 @@ export interface ScheduleSession {
 
 const page = () => {
 
-
+    const router = useRouter();
     const { data: mysession, error, isPending } = useSession()
     const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [selectedSession, setSelectedSession] = useState<any>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+
+
+
+    useEffect(() => {
+        if (!mysession && !isPending) {
+            router.push('/login');
+        }
+
+
+    }, [mysession, isPending]);
+
+    
+
+    if(error){
+        return <div className="text-red-500">Error: {error.message}</div>;
+    }
+
+
+
 
 
 

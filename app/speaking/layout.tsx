@@ -4,6 +4,9 @@ import Sidebar from "./components/Sidebar";
 import MobileBottomNavigation from "./components/MobileBottomNavigation";
 
 export default function SpeakingLayout({ children }: { children: React.ReactNode }) {
+    
+
+
     return (
         <div className="min-h-screen bg-gray-50">
             <div className="flex lg:min-h-screen">

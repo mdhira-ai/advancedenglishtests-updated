@@ -31,7 +31,7 @@ export default function SignUp() {
 	const router = useRouter();
 	const [loading, setLoading] = useState(false);
 
-	
+
 
 
 
@@ -209,7 +209,9 @@ export default function SignUp() {
 								await signIn.social(
 									{
 										provider: "google",
-										callbackURL: "/speaking"
+										callbackURL: "/speaking",
+										newUserCallbackURL: "/welcome",
+
 									},
 									{
 										onRequest: (ctx) => {
@@ -234,7 +236,7 @@ export default function SignUp() {
 
 
 
-					
+
 				</div>
 			</CardContent>
 			<CardFooter>

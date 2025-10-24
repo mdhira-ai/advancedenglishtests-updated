@@ -93,7 +93,11 @@ export default function Navigation() {
   }, [isTestsDropdownOpen, isGrammarDropdownOpen, isSpeakingDropdownOpen, isUserDropdownOpen])
 
   const handleSignOut: () => Promise<void> = async () => {
-
+    const currentPath = window.location.pathname;
+    // Store the current path in localStorage
+    if (typeof window !== 'undefined') {
+      sessionStorage.setItem('redirectAfterLogin', currentPath);
+    }
 
     await signOut({
       fetchOptions: {

@@ -6,7 +6,7 @@ import MobileBottomNavigation from "./components/MobileBottomNavigation";
 import UsersGrid from "./components/UsersGrid";
 import { Button } from "@/components/ui/button";
 import { useSpeakingPage } from "@/lib/SpeakingPageProvider";
-import { useEffect } from "react";
+import { useEffect, useLayoutEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import Loading from "./loading";
@@ -16,14 +16,19 @@ const page = () => {
     const { data: session, isPending, error } = useSession();
     const router = useRouter();
 
-    useEffect(() => {
-        if (!session) {
-            router.replace("/login"); // Use replace instead of push
+    useLayoutEffect(() => {
+        if (!session && !isPending) {
+            const currentPath = window.location.pathname;
+            router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`);
         }
-    }, [session, router]);
+    }, [session, isPending, router]);
 
     if (isPending) {
         return <Loading />;
+    }
+
+    if (!session?.user) {
+        return null; // Component will redirect via useEffect
     }
 
     if (error) {

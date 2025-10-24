@@ -51,9 +51,9 @@ const Sidebar = () => {
                             <div className="text-center p-2 lg:p-3 bg-orange-50 rounded-lg">
                                 <Users className="h-5 w-5 lg:h-6 lg:w-6 text-orange-600 mx-auto mb-1" />
                                 <p className="text-base lg:text-lg font-bold text-orange-700">
-                                    {userStats.speaking}
+                                    {userStats.online}
                                 </p>
-                                <p className="text-xs text-gray-600">In Rooms</p>
+                                <p className="text-xs text-gray-600">online</p>
                             </div>
                         </div>
                     </div>

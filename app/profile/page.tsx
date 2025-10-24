@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useLayoutEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -233,7 +233,7 @@ const getModuleColor = (module: string): string => {
   const colors = {
     reading: 'bg-[#1A3A6E]',
     listening: 'bg-[#ff8c42]',
-    speaking: 'bg-[#4f5bd5]', 
+    speaking: 'bg-[#4f5bd5]',
     writing: 'bg-[#ffc107]'
   }
   return colors[module as keyof typeof colors] || 'bg-gray-500'
@@ -267,7 +267,7 @@ export default function ProfilePage() {
     gender: '',
   })
   const [updating, setUpdating] = useState(false)
-  
+
   // Data states
   const [userStats, setUserStats] = useState<UserOverallStats | null>(null)
   const [testScores, setTestScores] = useState<TestScore[]>([])
@@ -276,7 +276,7 @@ export default function ProfilePage() {
   const [speakingRooms, setSpeakingRooms] = useState<SpeakingRoomData[]>([])
   const [moduleScores, setModuleScores] = useState<ModuleScores | null>(null)
   const [loading, setLoading] = useState(true)
-  
+
   // Subscription channels for realtime updates
   const [subscriptions, setSubscriptions] = useState<any[]>([])
 
@@ -284,19 +284,18 @@ export default function ProfilePage() {
   const pathname = usePathname();
 
   // habib
-    const {
-        data: session,
-        isPending, //loading state
-        error, //error object
-    } = useSession();
+  const {
+    data: session,
+    isPending, //loading state
+    error, //error object
+  } = useSession();
 
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isPending && !session?.user) {
-      const currentPath = pathname;
-      router.push(`/login?returnUrl=${encodeURIComponent(currentPath)}`);
+  useLayoutEffect(() => {
+    if (!session && !isPending) {
+      const currentPath = window.location.pathname;
+      router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`);
     }
-  }, [session, isPending, router, pathname]);
+  }, [session, isPending, router]);
 
 
   // Data fetching functions using Supabase
@@ -304,17 +303,17 @@ export default function ProfilePage() {
     if (!session?.user?.id) {
       return;
     }
-    
+
     try {
       const userId = session.user.id;
-      
+
       // Fetch user profile
       const { data: user, error: userError } = await supabase
         .from('user')
         .select('*')
         .eq('id', userId)
         .single();
-      
+
       if (userError) {
         console.error('Error fetching user:', userError);
         return;
@@ -412,16 +411,16 @@ export default function ProfilePage() {
       let userStats = null;
       if (user) {
         const totalTests = testScoresArray.length;
-        const avgScore = totalTests > 0 
+        const avgScore = totalTests > 0
           ? testScoresArray.reduce((sum, score) => sum + (score.ielts_band_score || 0), 0) / totalTests
           : 0;
-        const bestScore = totalTests > 0 
+        const bestScore = totalTests > 0
           ? Math.max(...testScoresArray.map(score => score.ielts_band_score || 0))
           : 0;
-        
+
         // Get unique test combinations
         const uniqueTests = new Set(testScoresArray.map(score => `${score.book}-${score.module}-${score.test_number}`));
-        
+
         const firstTest = testScoresArray.length > 0 ? testScoresArray[testScoresArray.length - 1] : null;
         const latestTest = testScoresArray.length > 0 ? testScoresArray[0] : null;
 
@@ -472,10 +471,10 @@ export default function ProfilePage() {
           const userJoinedAt = new Date(item.joined_at);
           const userLeftAt = item.left_at ? new Date(item.left_at) : new Date(); // Use current time if still in room
           const userDurationMinutes = Math.max(0, (userLeftAt.getTime() - userJoinedAt.getTime()) / (1000 * 60));
-          
+
           // Type assertion to ensure proper typing
           const room = item.room as any;
-          
+
           return {
             ...room,
             created_at: new Date(room.created_at).toISOString(),
@@ -521,7 +520,7 @@ export default function ProfilePage() {
 
     // Reading scores
     const readingScores = testScores.filter(score => score.module === 'reading');
-    const readingBestScore = readingScores.length > 0 
+    const readingBestScore = readingScores.length > 0
       ? Math.max(...readingScores.map(s => s.ieltsBandScore || 0))
       : 0;
     const readingAvgScore = readingScores.length > 0
@@ -541,7 +540,7 @@ export default function ProfilePage() {
     const totalSpeakingMinutes = speakingEvaluations.reduce((sum, evaluation) => sum + (evaluation.recordingDuration || 0), 0);
     const totalRoomMinutes = speakingRooms.reduce((sum, room) => sum + (room.user_duration_minutes || 0), 0);
     const totalMinutes = totalSpeakingMinutes + totalRoomMinutes;
-    const avgSpeakingDuration = (speakingEvaluations.length + speakingRooms.length) > 0 
+    const avgSpeakingDuration = (speakingEvaluations.length + speakingRooms.length) > 0
       ? totalMinutes / (speakingEvaluations.length + speakingRooms.length)
       : 0;
 
@@ -563,22 +562,22 @@ export default function ProfilePage() {
         if (participant.user_id !== session?.user?.id && participant.user) {
           const partnerId = participant.user.id;
           const existingPartner = partnerMap.get(partnerId);
-          
+
           // Calculate actual duration this partner was in the room with the user
           const partnerJoinedAt = new Date(participant.joined_at);
           const partnerLeftAt = participant.left_at ? new Date(participant.left_at) : new Date();
           const userJoinedAt = new Date(room.user_joined_at);
           const userLeftAt = room.user_left_at ? new Date(room.user_left_at) : new Date();
-          
+
           // Calculate overlap duration between user and partner
           const overlapStart = new Date(Math.max(partnerJoinedAt.getTime(), userJoinedAt.getTime()));
           const overlapEnd = new Date(Math.min(partnerLeftAt.getTime(), userLeftAt.getTime()));
           const overlapDuration = Math.max(0, (overlapEnd.getTime() - overlapStart.getTime()) / (1000 * 60)); // in minutes
-          
-          const likesReceived = room.room_likes?.filter(like => 
+
+          const likesReceived = room.room_likes?.filter(like =>
             like.liked_user_id === partnerId && like.liker_id === session?.user?.id
           ).length || 0;
-          
+
           if (existingPartner) {
             existingPartner.total_sessions += 1;
             existingPartner.total_duration += overlapDuration;
@@ -626,7 +625,7 @@ export default function ProfilePage() {
         bestScore: readingBestScore,
         recentScores: readingScores.slice(0, 4).map(s => s.ieltsBandScore || 0),
         averageScore: readingAvgScore,
-        improvement: readingScores.length >= 2 
+        improvement: readingScores.length >= 2
           ? `${readingScores[0]?.ieltsBandScore! - readingScores[1]?.ieltsBandScore! >= 0 ? '+' : ''}${(readingScores[0]?.ieltsBandScore! - readingScores[1]?.ieltsBandScore!).toFixed(1)}`
           : '0'
       },
@@ -644,13 +643,13 @@ export default function ProfilePage() {
       },
       speaking: {
         total_sessions: speakingEvaluations.length + speakingRooms.length,
-        total_likes: speakingRooms.reduce((sum, room) => 
+        total_likes: speakingRooms.reduce((sum, room) =>
           sum + (room.room_likes?.filter(like => like.liked_user_id === session?.user?.id).length || 0), 0),
         avg_session_duration: Math.round(avgSpeakingDuration), // Already in minutes
         total_minutes: Math.round(totalMinutes),
         color: getModuleColor('speaking'),
-        level: (speakingEvaluations.length + speakingRooms.length) > 10 ? 'Advanced' : 
-               (speakingEvaluations.length + speakingRooms.length) > 5 ? 'Intermediate' : 'Beginner',
+        level: (speakingEvaluations.length + speakingRooms.length) > 10 ? 'Advanced' :
+          (speakingEvaluations.length + speakingRooms.length) > 5 ? 'Intermediate' : 'Beginner',
         partner_history: conversationPartners,
         total_evaluations: speakingEvaluations.length,
         evaluations: speakingEvaluations
@@ -778,7 +777,7 @@ export default function ProfilePage() {
   // Initialize form data with user's current name and gender
   useEffect(() => {
     if (session?.user?.name) {
-      setFormData({ 
+      setFormData({
         name: session.user.name,
         gender: userStats?.gender || ''
       });
@@ -792,7 +791,7 @@ export default function ProfilePage() {
     speaking: { total_sessions: 0, total_likes: 0, avg_session_duration: 0, total_minutes: 0, color: 'bg-[#4f5bd5]', level: 'Beginner', partner_history: [], total_evaluations: 0, evaluations: [] },
     writing: { total_evaluations: 0, task1_count: 0, task2_count: 0, avg_word_count: 0, latest_evaluation: null, evaluations: [], color: 'bg-[#ffc107]', level: 'Beginner' }
   };
-  
+
   const currentUserStats = userStats || {
     userId: session?.user?.id || '',
     email: session?.user?.email || '',
@@ -828,7 +827,7 @@ export default function ProfilePage() {
 
   const updateProfile = async (updatedData: { name: string; gender: string }) => {
     if (!session?.user?.id) return;
-    
+
     try {
       const { data, error } = await supabase
         .from('user')
@@ -856,7 +855,7 @@ export default function ProfilePage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setUpdating(true)
-    
+
     try {
       await updateProfile({ name: formData.name, gender: formData.gender })
       setIsEditing(false)
@@ -878,8 +877,8 @@ export default function ProfilePage() {
             <div className="relative">
               <div className="w-20 h-20 rounded-2xl bg-[#1A3A6E] flex items-center justify-center ring-4 ring-slate-100">
                 <div className="text-2xl font-bold text-white">
-                  {session?.user?.name ? 
-                    session.user.name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2) 
+                  {session?.user?.name ?
+                    session.user.name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2)
                     : 'U'
                   }
                 </div>
@@ -1090,7 +1089,7 @@ export default function ProfilePage() {
           <h2 className="text-xl font-bold text-gray-900">Skills Overview</h2>
           <p className="text-sm text-gray-600">Click any module for detailed analysis</p>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           {Object.entries(currentModuleScores).map(([module, data]) => (
             <Card
@@ -1103,9 +1102,9 @@ export default function ProfilePage() {
                   <div className="flex items-center space-x-2 lg:space-x-3">
                     <div className={`w-8 h-8 lg:w-12 lg:h-12 rounded-lg ${data.color} flex items-center justify-center text-white font-bold text-sm lg:text-lg`}>
                       {module === 'reading' ? <BookOpen className="w-4 h-4 lg:w-6 lg:h-6" /> :
-                       module === 'listening' ? <Headphones className="w-4 h-4 lg:w-6 lg:h-6" /> :
-                       module === 'speaking' ? <Mic className="w-4 h-4 lg:w-6 lg:h-6" /> :
-                       module === 'writing' ? <PenTool className="w-4 h-4 lg:w-6 lg:h-6" /> : null}
+                        module === 'listening' ? <Headphones className="w-4 h-4 lg:w-6 lg:h-6" /> :
+                          module === 'speaking' ? <Mic className="w-4 h-4 lg:w-6 lg:h-6" /> :
+                            module === 'writing' ? <PenTool className="w-4 h-4 lg:w-6 lg:h-6" /> : null}
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900 capitalize text-sm lg:text-base">{module}</h3>
@@ -1190,7 +1189,7 @@ export default function ProfilePage() {
             </Card>
           ))}
         </div>
-        
+
         {/* Show detailed module view if selected */}
         {selectedModule && (
           <div className="space-y-6">
@@ -1317,7 +1316,7 @@ export default function ProfilePage() {
                                 <div className="mb-2">
                                   <p className="text-sm text-gray-600 mb-1">My participation:</p>
                                   <div className="text-xs text-gray-500">
-                                    Joined: {new Date(room.user_joined_at).toLocaleTimeString()} • 
+                                    Joined: {new Date(room.user_joined_at).toLocaleTimeString()} •
                                     {room.user_left_at ? ` Left: ${new Date(room.user_left_at).toLocaleTimeString()}` : ' Still active'}
                                   </div>
                                 </div>
@@ -1332,11 +1331,11 @@ export default function ProfilePage() {
                                       const partnerLeftAt = participant.left_at ? new Date(participant.left_at) : new Date();
                                       const userJoinedAt = new Date(room.user_joined_at);
                                       const userLeftAt = room.user_left_at ? new Date(room.user_left_at) : new Date();
-                                      
+
                                       const overlapStart = new Date(Math.max(partnerJoinedAt.getTime(), userJoinedAt.getTime()));
                                       const overlapEnd = new Date(Math.min(partnerLeftAt.getTime(), userLeftAt.getTime()));
                                       const overlapDuration = Math.max(0, (overlapEnd.getTime() - overlapStart.getTime()) / (1000 * 60));
-                                      
+
                                       return (
                                         <div key={participant.id} className="inline-flex items-center space-x-1 bg-gray-100 rounded-full px-2 py-1">
                                           <div className={`w-4 h-4 rounded-full ${getAvatarColor(participant.user.name.split(' ')[0] || '', participant.user.name.split(' ')[1] || '')} flex items-center justify-center text-white text-xs font-bold`}>
@@ -1458,9 +1457,8 @@ export default function ProfilePage() {
                           <div key={evaluation.id} className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
                             <div className="flex justify-between items-start mb-2">
                               <div className="flex items-center space-x-3">
-                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                                  evaluation.taskType === 'task1' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
-                                }`}>
+                                <span className={`px-2 py-1 rounded-full text-xs font-medium ${evaluation.taskType === 'task1' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                                  }`}>
                                   {evaluation.taskType.toUpperCase()}
                                 </span>
                                 <span className="text-sm text-gray-500">{new Date(evaluation.createdAt).toLocaleDateString()}</span>
@@ -1528,7 +1526,7 @@ export default function ProfilePage() {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">Test History</h3>
                     {/* Debug info - remove this after testing */}
                     <div className="mb-2 text-xs text-gray-500">
-                      Total test scores: {testScores.length}, 
+                      Total test scores: {testScores.length},
                       {selectedModule} tests: {testScores.filter(score => score.module === selectedModule).length}
                     </div>
                     <div className="overflow-x-auto">
@@ -1548,19 +1546,19 @@ export default function ProfilePage() {
                             .filter(score => score.module === selectedModule)
                             .slice(0, 10)
                             .map((test, index) => (
-                            <tr key={test.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">{test.book}</td>
-                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">Test {test.testNumber}</td>
-                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900 font-semibold">{test.score}</td>
-                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900 font-semibold">{test.ieltsBandScore || 'N/A'}</td>
-                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">
-                                {test.timeTaken ? `${Math.floor(test.timeTaken / 60)}:${(test.timeTaken % 60).toString().padStart(2, '0')}` : 'N/A'}
-                              </td>
-                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">
-                                {new Date(test.createdAt).toLocaleDateString()}
-                              </td>
-                            </tr>
-                          ))}
+                              <tr key={test.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                                <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">{test.book}</td>
+                                <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">Test {test.testNumber}</td>
+                                <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900 font-semibold">{test.score}</td>
+                                <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900 font-semibold">{test.ieltsBandScore || 'N/A'}</td>
+                                <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">
+                                  {test.timeTaken ? `${Math.floor(test.timeTaken / 60)}:${(test.timeTaken % 60).toString().padStart(2, '0')}` : 'N/A'}
+                                </td>
+                                <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">
+                                  {new Date(test.createdAt).toLocaleDateString()}
+                                </td>
+                              </tr>
+                            ))}
                           {testScores.filter(score => score.module === selectedModule).length === 0 && (
                             <tr>
                               <td colSpan={6} className="border border-gray-200 px-3 py-8 text-center text-gray-500">
@@ -1807,8 +1805,8 @@ export default function ProfilePage() {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center space-x-2 mb-2">
                                 <span className={`px-2 py-1 text-xs font-medium rounded-full ${evaluation.taskType === 'task1'
-                                    ? 'bg-blue-100 text-blue-800'
-                                    : 'bg-purple-100 text-purple-800'
+                                  ? 'bg-blue-100 text-blue-800'
+                                  : 'bg-purple-100 text-purple-800'
                                   }`}>
                                   {evaluation.taskType.toUpperCase()}
                                 </span>
@@ -1887,7 +1885,7 @@ export default function ProfilePage() {
                   <h3 className="text-lg font-semibold text-gray-900 mb-4">Test History</h3>
                   {/* Debug info - remove this after testing */}
                   <div className="mb-2 text-xs text-gray-500">
-                    Total test scores: {testScores.length}, 
+                    Total test scores: {testScores.length},
                     {selectedModule} tests: {testScores.filter(score => score.module === selectedModule).length}
                   </div>
                   <div className="overflow-x-auto">
@@ -1907,19 +1905,19 @@ export default function ProfilePage() {
                           .filter(score => score.module === selectedModule)
                           .slice(0, 10)
                           .map((test, index) => (
-                          <tr key={test.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                            <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">{test.book}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">Test {test.testNumber}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900 font-semibold">{test.score}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900 font-semibold">{test.ieltsBandScore || 'N/A'}</td>
-                            <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">
-                              {test.timeTaken ? `${Math.floor(test.timeTaken / 60)}:${(test.timeTaken % 60).toString().padStart(2, '0')}` : 'N/A'}
-                            </td>
-                            <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">
-                              {new Date(test.createdAt).toLocaleDateString()}
-                            </td>
-                          </tr>
-                        ))}
+                            <tr key={test.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">{test.book}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">Test {test.testNumber}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900 font-semibold">{test.score}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900 font-semibold">{test.ieltsBandScore || 'N/A'}</td>
+                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">
+                                {test.timeTaken ? `${Math.floor(test.timeTaken / 60)}:${(test.timeTaken % 60).toString().padStart(2, '0')}` : 'N/A'}
+                              </td>
+                              <td className="border border-gray-200 px-3 py-2 text-sm text-gray-900">
+                                {new Date(test.createdAt).toLocaleDateString()}
+                              </td>
+                            </tr>
+                          ))}
                         {testScores.filter(score => score.module === selectedModule).length === 0 && (
                           <tr>
                             <td colSpan={6} className="border border-gray-200 px-3 py-8 text-center text-gray-500">
@@ -2073,8 +2071,8 @@ export default function ProfilePage() {
         </div>
       </div>
       <div className="p-6">
-        <UserTestResults 
-          userId={session?.user?.id} 
+        <UserTestResults
+          userId={session?.user?.id}
           testScores={testScores}
           userStats={currentUserStats}
         />
@@ -2161,8 +2159,8 @@ export default function ProfilePage() {
                   key={item.id}
                   onClick={() => setActiveSection(item.id)}
                   className={`flex flex-col items-center justify-center py-2 px-3 rounded-xl transition-all duration-200 ${activeSection === item.id
-                      ? 'bg-[#1A3A6E] text-white'
-                      : 'text-gray-600 hover:text-[#1A3A6E] hover:bg-slate-100'
+                    ? 'bg-[#1A3A6E] text-white'
+                    : 'text-gray-600 hover:text-[#1A3A6E] hover:bg-slate-100'
                     }`}
                 >
                   <div className="w-5 h-5 mb-1">
@@ -2184,8 +2182,8 @@ export default function ProfilePage() {
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 rounded-xl bg-[#1A3A6E] flex items-center justify-center">
                     <div className="text-lg font-bold text-white">
-                      {session?.user?.name ? 
-                        session.user.name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2) 
+                      {session?.user?.name ?
+                        session.user.name.split(' ').map(word => word.charAt(0)).join('').toUpperCase().slice(0, 2)
                         : 'U'
                       }
                     </div>
@@ -2206,8 +2204,8 @@ export default function ProfilePage() {
                     key={item.id}
                     onClick={() => setActiveSection(item.id)}
                     className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-left transition-all duration-200 group ${activeSection === item.id
-                        ? 'bg-[#1A3A6E] text-white shadow-lg'
-                        : 'text-gray-700 hover:bg-slate-50 hover:text-[#1A3A6E]'
+                      ? 'bg-[#1A3A6E] text-white shadow-lg'
+                      : 'text-gray-700 hover:bg-slate-50 hover:text-[#1A3A6E]'
                       }`}
                   >
                     <div className={`flex-shrink-0 ${activeSection === item.id ? 'text-white' : 'text-gray-500 group-hover:text-[#1A3A6E]'
