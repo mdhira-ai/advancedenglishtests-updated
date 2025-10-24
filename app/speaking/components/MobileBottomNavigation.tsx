@@ -1,5 +1,6 @@
 
 import { CalendarDays, Inbox, Send, Users } from "lucide-react"
+import Link from "next/link";
 
 
 const MobileBottomNavigation = () => {
@@ -29,12 +30,14 @@ const MobileBottomNavigation = () => {
                             </button>
 
                             {/* Scheduled Sessions */}
-                            <button className="flex flex-col items-center py-3 sm:py-3 px-2 text-center text-blue-600 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+                            <Link
+                                href="/speaking/schedulesession"
+                                className="flex flex-col items-center py-3 sm:py-3 px-2 text-center text-blue-600 hover:bg-gray-50 active:bg-gray-100 transition-colors">
                                 <div className="relative">
                                     <CalendarDays className="h-6 w-6 sm:h-7 sm:w-7 mb-1 sm:mb-1" />
                                 </div>
                                 <span className="text-xs hidden sm:block">Schedule</span>
-                            </button>
+                            </Link>
 
                             {/* Sent Requests */}
                             <button

@@ -37,7 +37,7 @@ const ScheduleCalender = ({ onDateTimeChange }: ScheduleCalenderProps) => {
 
     return (
         <div
-            className="flex flex-row justify-between w-full max-w-sm gap-4 py-4"
+            className="flex flex-row flex-wrap lg:flex-nowrap justify-center  w-full max-w-sm gap-4 py-4"
         >
             <div className="flex flex-col gap-3">
                 <Label htmlFor="date-picker" className="px-1">

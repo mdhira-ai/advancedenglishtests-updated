@@ -88,7 +88,7 @@ const Sidebar = () => {
 
                         {/* Scheduled Sessions */}
                         <Link
-                            href="/speaking/ScheduleSession"
+                            href="/speaking/schedulesession"
                             className="w-full flex items-center justify-between p-2 lg:p-3 text-left rounded-lg hover:bg-gray-50 transition-colors">
                             <div className="flex items-center space-x-2 lg:space-x-3">
                                 <div className="p-1.5 lg:p-2 bg-blue-100 rounded-lg">
