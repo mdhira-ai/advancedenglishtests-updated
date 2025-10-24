@@ -419,7 +419,7 @@ model User {
 model Session {
   id        String   @id
   expiresAt DateTime @db.Timestamp(6)
-  token     String
+  token     String   @unique
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @updatedAt @db.Timestamp(6)
   ipAddress String?
