@@ -5,6 +5,7 @@ import { useSession } from '@/lib/auth-client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase';
 import Loading from '../loading';
+import ShowDialog from './components/ShowDialog';
 
 
 
@@ -29,6 +30,27 @@ const page = () => {
     const { data: mysession, error, isPending } = useSession()
     const [events, setEvents] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [selectedSession, setSelectedSession] = useState<any>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+
+
+
+    const handleEventClick = (info: any) => {
+        const sessionData = {
+            id: info.event.id,
+            title: info.event.title,
+            status: info.event.extendedProps.status,
+            description: info.event.extendedProps.description,
+            startTime: info.event.start,
+            isBooker: info.event.extendedProps.isBooker,
+            participantId: info.event.extendedProps.participantId,
+            bookerId: info.event.extendedProps.bookerId,
+        };
+
+        setSelectedSession(sessionData);
+        setIsDialogOpen(true);
+    };
 
 
 
@@ -92,15 +114,16 @@ const page = () => {
                 eventContent={renderEventContent} // custom render function
                 events={events}
                 // initialView="dayGridWeek"
-                // events={[
-                //     { title: 'event 1', date: '2025-10-28' },
-                //     { title: 'event 2', date: '2025-10-29' }
-                // ]}
-                height="auto"
-                eventClick={(info) => {
-                    console.log('Event clicked:', info.event);
-                }}
 
+                height="auto"
+                eventClick={handleEventClick}
+
+            />
+
+            <ShowDialog
+                isOpen={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                sessionData={selectedSession}
             />
         </div>
     );
