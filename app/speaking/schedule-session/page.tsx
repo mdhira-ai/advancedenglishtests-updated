@@ -86,10 +86,12 @@ const page = () => {
             className="max-w-6xl mx-auto p-4 lg:p-6 bg-white shadow rounded-lg m-10"
         >
             <FullCalendar
+                timeZone='local'
                 plugins={[dayGridPlugin]}
                 initialView="dayGridMonth"
                 eventContent={renderEventContent} // custom render function
                 events={events}
+                // initialView="dayGridWeek"
                 // events={[
                 //     { title: 'event 1', date: '2025-10-28' },
                 //     { title: 'event 2', date: '2025-10-29' }
@@ -112,14 +114,14 @@ function renderEventContent(eventInfo: any) {
     const status = eventInfo.event.extendedProps.status;
 
     return (
-        <div className="p-1">
-            <div className="font-semibold text-sm">
+        <div className=" overflow-hidden  ">
+            <div className="font-semibold text-sm  ">
                 {eventInfo.event.title}
             </div>
             <div className="text-xs">
                 {eventInfo.timeText}
             </div>
-            <div className="text-xs opacity-75">
+            <div className="text-xs opacity-75 pt-4 text-wrap">
                 {isBooker ? 'You booked' : 'You participate'}
             </div>
             {status !== 'scheduled' && (
