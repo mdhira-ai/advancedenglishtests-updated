@@ -21,7 +21,8 @@ export async function UpdateCallStatus(userId: string, status: string) {
   const { data, error } = await supabase
     .from("user_presence")
     .update({ call_status: status })
-    .eq("userId", userId);
+    .eq("userId", userId)
+    .select();
 
   if (error) {
     console.error("Error updating call status:", error);

@@ -147,6 +147,9 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
                 setLocalStream(null)
             }
 
+            await UpdateCallStatus(session?.user?.id || '', 'idle');
+
+
             // Reset call state
             setCallState({
                 isInCall: false,
@@ -170,6 +173,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             }
         } catch (error) {
             console.error('Error cancelling call:', error)
+            await UpdateCallStatus(session?.user?.id || '', 'idle');
         }
     }, [callState.isRinging, callState.remoteUserId, socket, session?.user, onCallEnded])
 
@@ -212,11 +216,12 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             isRinging: false
         });
 
+        await UpdateCallStatus(session?.user?.id || '', 'idle');
         // Trigger onCallEnded callback
         if (onCallEnded) {
             onCallEnded();
         }
-    }, [onCallEnded]);
+    }, [onCallEnded, session?.user?.id]);
 
 
 
@@ -279,13 +284,15 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             })
 
             // Handle incoming calls
-            peerInstance.on('call', (call) => {
+            peerInstance.on('call', async (call) => {
                 console.log('Incoming call from:', call.peer)
                 incomingCallRef.current = call
 
                 // Extract caller info from metadata
                 const callerUserId = call.metadata?.userId || call.peer
                 const callerName = call.metadata?.userName || 'Unknown User'
+
+                await UpdateCallStatus(session?.user?.id || '', 'ringing');
 
                 handleIncomingCall(call.peer, callerUserId);
 
@@ -382,7 +389,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     };
 
     // Handle call rejection notification
-    const handleCallRejected = useCallback((data: any) => {
+    const handleCallRejected = useCallback(async (data: any) => {
         console.log("Call rejected by user:", data);
 
 
@@ -433,15 +440,18 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             setLocalStream(null);
         }
 
+
+        await UpdateCallStatus(session?.user?.id || '', 'idle');
+
         // Trigger onCallEnded callback
         if (onCallEnded) {
             onCallEnded();
         }
-    }, [onCallEnded]);
+    }, [onCallEnded, session?.user?.id]);
 
 
     // Update handleReject function to emit the rejection
-    const handleReject = () => {
+    const handleReject = async () => {
         toast.dismiss(); // Dismiss all toasts when call ends
 
         // Stop sound when rejecting call
@@ -457,6 +467,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
                 rejectedBy: session?.user?.name || session?.user?.id
             });
         }
+
+
+        await UpdateCallStatus(session?.user?.id || '', 'idle');
+
 
         // Clean up incoming call
         if (incomingCallRef.current) {
@@ -503,7 +517,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
     // Call user
     const callUser = useCallback(async (remotePeerId: string, remoteUserId: string): Promise<boolean> => {
-        if (!peerRef.current || callState.isInCall || callState.isConnecting) return false
+        if (!peerRef.current || callState.isInCall || callState.isConnecting) {
+            toast.warning('You are already in a call or connecting');
+            return false
+        }
 
         try {
             setCallState(prev => ({ ...prev, isConnecting: true, remoteUserId }))
@@ -557,7 +574,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
 
             // Handle call events
-            call.on('stream', (remoteStream) => {
+            call.on('stream', async (remoteStream) => {
                 console.log('Received remote stream')
 
                 // Stop sound when call is connected
@@ -569,6 +586,9 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
                     clearTimeout(ringingTimeoutRef.current)
                     ringingTimeoutRef.current = null
                 }
+
+                await UpdateCallStatus(session?.user?.id || '', 'in-call');
+
 
                 // Play remote audio
                 if (!remoteAudioRef.current) {
@@ -592,7 +612,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
             })
 
-            call.on('close', () => {
+            call.on('close', async () => {
                 console.log('Call ended by remote peer')
 
                 // Stop sound on call end
@@ -603,12 +623,12 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
                     clearTimeout(ringingTimeoutRef.current)
                     ringingTimeoutRef.current = null
                 }
+                await UpdateCallStatus(session?.user?.id || '', 'idle');
 
-                UpdateCallStatus(session?.user?.id || '', 'idle');
                 handleCallEnd()
             })
 
-            call.on('error', (error) => {
+            call.on('error', async (error) => {
                 console.error('Call error:', error)
 
 
@@ -621,7 +641,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
                     clearTimeout(ringingTimeoutRef.current)
                     ringingTimeoutRef.current = null
                 }
-                UpdateCallStatus(session?.user?.id || '', 'idle');
+                await UpdateCallStatus(session?.user?.id || '', 'idle');
                 handleCallEnd()
             })
 
@@ -634,6 +654,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
             // Stop sound on error
             notificationSound.stopNotificationSound();
+            await UpdateCallStatus(session?.user?.id || '', 'idle');
 
 
             setCallState(prev => ({ ...prev, isConnecting: false, isRinging: false }))
@@ -655,13 +676,20 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
                 return false
             }
 
+
+            await UpdateCallStatus(session?.user?.id || '', 'answering');
+
+
             // Answer the call
             const call = incomingCallRef.current
             call.answer(stream)
 
             // Handle call events
-            call.on('stream', (remoteStream: MediaProvider | null) => {
+            call.on('stream', async (remoteStream: MediaProvider | null) => {
                 console.log('Received remote stream after answering')
+
+
+                await UpdateCallStatus(session?.user?.id || '', 'in-call');
 
                 // Play remote audio
                 if (!remoteAudioRef.current) {
@@ -681,13 +709,15 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
                 }))
             })
 
-            call.on('close', () => {
+            call.on('close', async () => {
                 console.log('Call ended by remote peer')
+                await UpdateCallStatus(session?.user?.id || '', 'idle');
                 handleCallEnd()
             })
 
-            call.on('error', (error: any) => {
+            call.on('error', async (error: any) => {
                 console.error('Call error:', error)
+                await UpdateCallStatus(session?.user?.id || '', 'idle');
                 handleCallEnd()
             })
 
@@ -696,13 +726,14 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             return true
         } catch (error) {
             console.error('Error answering call:', error)
+            await UpdateCallStatus(session?.user?.id || '', 'idle');
             setCallState(prev => ({ ...prev, isConnecting: false }))
             return false
         }
-    }, [getUserMedia])
+    }, [getUserMedia, session?.user])
 
     // Handle call end
-    const handleCallEnd = useCallback(() => {
+    const handleCallEnd = useCallback(async () => {
 
         // Always stop sound when call ends
         notificationSound.stopNotificationSound();
@@ -712,6 +743,8 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             ringingTimeoutRef.current = null
         }
 
+
+        await UpdateCallStatus(session?.user?.id || '', 'idle');
 
         // Close current call
         if (currentCallRef.current) {
@@ -750,7 +783,7 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         if (onCallEnded) {
             onCallEnded()
         }
-    }, [onCallEnded])
+    }, [onCallEnded, session?.user?.id])
 
     // End call
     const endCall = useCallback(async (): Promise<void> => {

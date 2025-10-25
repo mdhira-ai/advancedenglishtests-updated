@@ -5,9 +5,11 @@ import { usePeer } from "@/lib/PeerProvider";
 const ConnectBtn = ({
   remotePeerId,
   remoteUserId,
+  callstatus
 }: {
   remotePeerId: string;
   remoteUserId: string;
+  callstatus: string | null;
 }) => {
   const { data: session } = useSession();
   const { callUser, callState, cancelCall } = usePeer();
