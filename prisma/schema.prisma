@@ -377,41 +377,42 @@ model speaking_room_messages {
 }
 
 model User {
-  id                        String                        @id
-  name                      String
-  email                     String
-  emailVerified             Boolean                       @default(false)
-  image                     String?
-  createdAt                 DateTime                      @db.Timestamptz(6)
-  updatedAt                 DateTime                      @updatedAt @db.Timestamptz(6)
-  gender                    String?
-  passwordHash              String?                       @map("password_hash")
-  accounts                  Account[]
-  contactSubmissions        contact_form_submissions[]
-  dailyTestClicks           daily_test_clicks[]
-  newsletterSubscriptions   newsletter_subscriptions[]
-  otpVerifications          otp_verifications[]
-  scheduledReceivedRequests scheduled_speaking_requests[] @relation("ScheduledReceivedRequests")
-  scheduledSentRequests     scheduled_speaking_requests[] @relation("ScheduledSentRequests")
-  sessions                  Session[]
-  speakingEvaluations       speaking_evaluation_data[]
-  receivedRequests          speaking_requests[]           @relation("ReceivedRequests")
-  sentRequests              speaking_requests[]           @relation("SentRequests")
-  receivedRoomInvitations   speaking_room_invitations[]   @relation("ReceivedRoomInvitations")
-  sentRoomInvitations       speaking_room_invitations[]   @relation("SentRoomInvitations")
-  receivedLikes             speaking_room_likes[]         @relation("ReceivedLikes")
-  givenLikes                speaking_room_likes[]         @relation("GivenLikes")
-  receivedMessages          speaking_room_messages[]      @relation("ReceivedMessages")
-  sentMessages              speaking_room_messages[]      @relation("SentMessages")
-  roomParticipations        speaking_room_participants[]  @relation("RoomParticipants")
-  createdRooms              speaking_rooms[]              @relation("CreatedRooms")
-  testScores                test_scores[]
-  userPresence              user_presence?
-  writingEvaluations        writing_evaluation_data[]
-  speakingSessionsAsBooker  schedule_sessions[]           @relation("BookedSessions")
-  speakingSessionsAsParticipant schedule_sessions[]       @relation("ParticipantSessions")
+  id                             String                           @id
+  name                           String
+  email                          String
+  emailVerified                  Boolean                          @default(false)
+  image                          String?
+  createdAt                      DateTime                         @db.Timestamptz(6)
+  updatedAt                      DateTime                         @updatedAt @db.Timestamptz(6)
+  gender                         String?
+  passwordHash                   String?                          @map("password_hash")
+  accounts                       Account[]
+  contactSubmissions             contact_form_submissions[]
+  dailyTestClicks                daily_test_clicks[]
+  newsletterSubscriptions        newsletter_subscriptions[]
+  otpVerifications               otp_verifications[]
+  scheduledReceivedRequests      scheduled_speaking_requests[]    @relation("ScheduledReceivedRequests")
+  scheduledSentRequests          scheduled_speaking_requests[]    @relation("ScheduledSentRequests")
+  sessions                       Session[]
+  speakingEvaluations            speaking_evaluation_data[]
+  receivedRequests               speaking_requests[]              @relation("ReceivedRequests")
+  sentRequests                   speaking_requests[]              @relation("SentRequests")
+  receivedRoomInvitations        speaking_room_invitations[]      @relation("ReceivedRoomInvitations")
+  sentRoomInvitations            speaking_room_invitations[]      @relation("SentRoomInvitations")
+  receivedLikes                  speaking_room_likes[]            @relation("ReceivedLikes")
+  givenLikes                     speaking_room_likes[]            @relation("GivenLikes")
+  receivedMessages               speaking_room_messages[]         @relation("ReceivedMessages")
+  sentMessages                   speaking_room_messages[]         @relation("SentMessages")
+  roomParticipations             speaking_room_participants[]     @relation("RoomParticipants")
+  createdRooms                   speaking_rooms[]                 @relation("CreatedRooms")
+  testScores                     test_scores[]
+  userPresence                   user_presence?
+  writingEvaluations             writing_evaluation_data[]
+  speakingSessionsAsBooker       schedule_sessions[]              @relation("BookedSessions")
+  speakingSessionsAsParticipant  schedule_sessions[]              @relation("ParticipantSessions")
   schedule_session_confirmations schedule_session_confirmations[] @relation("SessionConfirmations")
-  
+  actorNotifications             Notifications[]                  @relation("ActorNotifications")
+  userNotifications              Notifications[]                  @relation("UserNotifications")
 
   @@map("user")
 }
@@ -487,43 +488,43 @@ enum AdminRole {
   @@map("admin_role")
 }
 
-
 // Add this new model to your existing schema
 model schedule_sessions {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()"))
-  bookerId              String    @map("booker_id")
-  participantId         String    @map("participant_id")
-  
+  id            String @id @default(dbgenerated("gen_random_uuid()"))
+  bookerId      String @map("booker_id")
+  participantId String @map("participant_id")
+
   // Store in UTC, display in local timezones
-  scheduledAtUtc        DateTime  @map("scheduled_at_utc") @db.Timestamptz(6)
-  durationMinutes       Int?       @default(60) @map("duration_minutes")
-  
+  scheduledAtUtc  DateTime @map("scheduled_at_utc") @db.Timestamptz(6)
+  durationMinutes Int?     @default(60) @map("duration_minutes")
+
   // Store original timezone info for reference
-  bookerTimezone        String?    @map("booker_timezone") @db.VarChar(100)
-  participantTimezone   String?    @map("participant_timezone") @db.VarChar(100)
-  
+  bookerTimezone      String? @map("booker_timezone") @db.VarChar(100)
+  participantTimezone String? @map("participant_timezone") @db.VarChar(100)
+
   // Session details
-  title                 String?   @db.VarChar(255)
-  description           String?
-  meetingLink           String?   @map("meeting_link") @db.VarChar(500)
-  
+  title       String? @db.VarChar(255)
+  description String?
+  meetingLink String? @map("meeting_link") @db.VarChar(500)
+
   // Status tracking
-  status                String    @default("scheduled") @db.VarChar(50)
-  confirmationToken     String?   @unique @map("confirmation_token") @db.VarChar(255)
-  
+  status            String  @default("scheduled") @db.VarChar(50)
+  confirmationToken String? @unique @map("confirmation_token") @db.VarChar(255)
+
   // Email tracking
-  emailSentAt           DateTime? @map("email_sent_at") @db.Timestamptz(6)
-  reminderSentAt        DateTime? @map("reminder_sent_at") @db.Timestamptz(6)
-  confirmedAt           DateTime? @map("confirmed_at") @db.Timestamptz(6)
-  
-  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt             DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
-  
+  emailSentAt    DateTime? @map("email_sent_at") @db.Timestamptz(6)
+  reminderSentAt DateTime? @map("reminder_sent_at") @db.Timestamptz(6)
+  confirmedAt    DateTime? @map("confirmed_at") @db.Timestamptz(6)
+
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
   // Relations
-  booker                User      @relation("BookedSessions", fields: [bookerId], references: [id], onDelete: Cascade)
-  participant           User      @relation("ParticipantSessions", fields: [participantId], references: [id], onDelete: Cascade)
-  confirmations         schedule_session_confirmations[]
-  emailLogs             email_logs[]
+  booker        User                             @relation("BookedSessions", fields: [bookerId], references: [id], onDelete: Cascade)
+  participant   User                             @relation("ParticipantSessions", fields: [participantId], references: [id], onDelete: Cascade)
+  confirmations schedule_session_confirmations[]
+  emailLogs     email_logs[]
+  notifications Notifications[]                  @relation("SessionNotifications")
 
   @@index([bookerId])
   @@index([participantId])
@@ -534,15 +535,15 @@ model schedule_sessions {
 }
 
 model schedule_session_confirmations {
-  id                      String    @id @default(dbgenerated("gen_random_uuid()"))
-  sessionId               String    @map("session_id")
-  userId                  String    @map("user_id")
-  confirmedAt             DateTime? @map("confirmed_at") @db.Timestamptz(6)
-  timezoneAtConfirmation  String?   @map("timezone_at_confirmation") @db.VarChar(100)
-  confirmationMethod      String?   @map("confirmation_method") @db.VarChar(50)
+  id                     String    @id @default(dbgenerated("gen_random_uuid()"))
+  sessionId              String    @map("session_id")
+  userId                 String    @map("user_id")
+  confirmedAt            DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  timezoneAtConfirmation String?   @map("timezone_at_confirmation") @db.VarChar(100)
+  confirmationMethod     String?   @map("confirmation_method") @db.VarChar(50)
 
-  schedule_sessions       schedule_sessions  @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-  user                    User      @relation("SessionConfirmations", fields: [userId], references: [id], onDelete: Cascade)
+  schedule_sessions schedule_sessions @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user              User              @relation("SessionConfirmations", fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([sessionId, userId])
   @@index([sessionId])
@@ -565,4 +566,19 @@ model email_logs {
   @@index([sentAt])
   @@index([emailType])
   @@index([recipientEmail])
+}
+
+model Notifications {
+  notificationId    BigInt             @id @default(autoincrement())
+  type              String
+  isRead            Boolean            @default(false)
+  createdAt         DateTime           @default(now())
+  userId            String
+  actorId           String
+
+  // sessionId is optional, its connected to schedule_sessions when applicable
+  sessionId         String? 
+  actor             User               @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+  schedule_sessions schedule_sessions? @relation("SessionNotifications", fields: [sessionId], references: [id], onDelete: Cascade)
+  user              User               @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -18,14 +18,14 @@ import { useSession } from "@/lib/auth-client";
 
 const ScheduleDialogBox = ({ userDetails }: { userDetails: UsersData }) => {
     const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null);
-    const { data: session} = useSession();
+    const { data: session } = useSession();
 
     // Memoize the callback to prevent re-creation on every render
     const handleDateTimeChange = useCallback((dateTime: Date) => {
         setSelectedDateTime(dateTime);
     }, []);
 
-    const sendEmailToUser = async() => {
+    const sendEmailToUser = async () => {
         if (selectedDateTime) {
             try {
                 const bookerTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -43,9 +43,46 @@ const ScheduleDialogBox = ({ userDetails }: { userDetails: UsersData }) => {
                             scheduled_at_utc: bookerUTC,
                             booker_timezone: bookerLocalTime,
                         },
+                    ])
+                    .select('id'); // Returns all columns including the auto-generated ID
+
+
+                //model Notifications {
+                //   notificationId    BigInt             @id @default(autoincrement())
+                //   type              String
+                //   isRead            Boolean            @default(false)
+                //   createdAt         DateTime           @default(now())
+                //   userId            String
+                //   actorId           String
+
+                //   // sessionId is optional, its connected to schedule_sessions when applicable
+                //   sessionId         String? 
+                //   actor             User               @relation("ActorNotifications", fields: [actorId], references: [id], onDelete: Cascade)
+                //   schedule_sessions schedule_sessions? @relation("SessionNotifications", fields: [sessionId], references: [id], onDelete: Cascade)
+                //   user              User               @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+                // }
+
+                // Here you can implement the notification creation logic using your preferred method/library
+                const { data: notificationData, error: notificationError } = await supabase
+                    .from('Notifications')
+                    .insert([
+                        {
+                            type: 'session_scheduled',
+                            userId: userDetails.user.id,
+                            actorId: session?.user.id,
+                            sessionId: data?.[0].id,
+                        },
                     ]);
 
-                    toast.success("Session booked successfully! " + data + " session(s) scheduled.");
+                if (notificationError) {
+                    throw new Error(notificationError.message);
+                }
+
+
+
+
+                // console.log("Session scheduled with ID:", data?.[0].id);
+                toast.success("Session booked successfully!.");
 
                 if (error) {
                     throw new Error(error.message);

@@ -8,6 +8,7 @@ import { toast } from 'react-toastify';
 import CallToast from './ToastCall'
 import CallRejectedToast from '@/components/CallRejectedToast'
 import { GetusernamebyUserId, UpdateCallStatus } from './CRUD'
+import { notificationSound } from '@/components/NotificationSound'
 
 interface PeerUser {
     peerId: string
@@ -114,6 +115,9 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
         if (!callState.isRinging || !currentCallRef.current) return
 
         try {
+
+            // Stop sound when cancelling call
+            notificationSound.stopNotificationSound();
             // Emit call cancellation to notify the other user
             if (socket && callState.remoteUserId) {
                 socket.emit('call-cancelled', {
@@ -173,9 +177,13 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     const handleCallCancelled = useCallback(async (data: any) => {
         console.log("Call cancelled by user:", data);
 
+
+        // Stop sound when call is cancelled
+        notificationSound.stopNotificationSound();
+
         // Dismiss any active call toast
         toast.dismiss();
-        const username = await GetusernamebyUserId(data.fromUserId);    
+        const username = await GetusernamebyUserId(data.fromUserId);
 
         // Show notification to the receiver
         toast.info(`${username} cancelled the call `, {
@@ -341,16 +349,20 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
     const handleIncomingCall = (fromPeerId: string, fromUserId: string) => {
         // You can fetch user details if needed or use the provided IDs
+        notificationSound.playNotificationSound(30); // Play for 30 seconds max
+
         const callerName = GetusernamebyUserId(fromUserId); // Replace with actual name if available
 
         const toastId = toast(
             <CallToast
                 callerName={callerName}
                 onAnswer={() => {
+                    notificationSound.stopNotificationSound();
                     answerCall();
                     toast.dismiss(toastId);
                 }}
                 onDecline={() => {
+                    notificationSound.stopNotificationSound();
                     // Optionally handle call decline logic here
                     toast.dismiss(toastId);
                     handleReject();
@@ -373,6 +385,9 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     const handleCallRejected = useCallback((data: any) => {
         console.log("Call rejected by user:", data);
 
+
+        // Stop sound when call is rejected
+        notificationSound.stopNotificationSound();
 
         // Clear ringing timeout
         if (ringingTimeoutRef.current) {
@@ -428,6 +443,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
     // Update handleReject function to emit the rejection
     const handleReject = () => {
         toast.dismiss(); // Dismiss all toasts when call ends
+
+        // Stop sound when rejecting call
+        notificationSound.stopNotificationSound();
+
 
         // Emit call rejection to notify the caller
         if (socket && incomingCallRef.current) {
@@ -516,6 +535,9 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             )
 
 
+            // Start playing outgoing call sound
+            notificationSound.playNotificationSound(30);
+
             // Set a timeout for unanswered calls (e.g., 30 seconds)
             ringingTimeoutRef.current = setTimeout(() => {
                 if (callState.isRinging && !callState.isInCall) {
@@ -537,6 +559,10 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             // Handle call events
             call.on('stream', (remoteStream) => {
                 console.log('Received remote stream')
+
+                // Stop sound when call is connected
+                notificationSound.stopNotificationSound();
+
 
                 // Clear ringing timeout
                 if (ringingTimeoutRef.current) {
@@ -568,6 +594,11 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
             call.on('close', () => {
                 console.log('Call ended by remote peer')
+
+                // Stop sound on call end
+                notificationSound.stopNotificationSound();
+
+
                 if (ringingTimeoutRef.current) {
                     clearTimeout(ringingTimeoutRef.current)
                     ringingTimeoutRef.current = null
@@ -579,6 +610,13 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
             call.on('error', (error) => {
                 console.error('Call error:', error)
+
+
+
+                // Stop sound on error
+                notificationSound.stopNotificationSound();
+
+
                 if (ringingTimeoutRef.current) {
                     clearTimeout(ringingTimeoutRef.current)
                     ringingTimeoutRef.current = null
@@ -591,6 +629,13 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
             return true
         } catch (error) {
             console.error('Error calling user:', error)
+
+
+
+            // Stop sound on error
+            notificationSound.stopNotificationSound();
+
+
             setCallState(prev => ({ ...prev, isConnecting: false, isRinging: false }))
             return false
         }
@@ -658,6 +703,9 @@ export const PeerProvider: React.FC<PeerProviderProps> = ({
 
     // Handle call end
     const handleCallEnd = useCallback(() => {
+
+        // Always stop sound when call ends
+        notificationSound.stopNotificationSound();
         // Clear ringing timeout
         if (ringingTimeoutRef.current) {
             clearTimeout(ringingTimeoutRef.current)

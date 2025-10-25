@@ -24,6 +24,7 @@ import { signOut, useSession } from '@/lib/auth-client'
 import { useRouter } from 'next/navigation'
 import AuthModal from '@/components/auth/AuthModal'
 import { useSocket } from '@/lib/Socketprovider'
+import { NotificationDropdown } from '../NotificationDropdown'
 
 
 
@@ -266,11 +267,14 @@ export default function Navigation() {
               </Link>
             </div>
 
+
             {/* User Profile/Sign In (always visible) and Mobile Menu Button */}
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center  space-x-3">
               {
                 session && (
-                  <div className="relative" ref={userDropdownRef}>
+                  <div className="relative flex-row flex" ref={userDropdownRef}>
+
+                    <NotificationDropdown />
                     <Button
                       variant="ghost"
                       size="sm"
@@ -446,6 +450,8 @@ export default function Navigation() {
             </div>
           )}
         </div>
+
+
 
         <AuthModal
           isOpen={authModal.isOpen}

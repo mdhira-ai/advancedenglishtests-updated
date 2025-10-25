@@ -9,11 +9,11 @@ import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from '@vercel/analytics/next';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import SpeakingNotificationListener from "@/components/others/SpeakingNotificationListener";
 import { SocketProvider } from "@/lib/Socketprovider";
 import { SpeakingPageProvider } from "@/lib/SpeakingPageProvider";
 import { PeerProvider } from "@/lib/PeerProvider";
 import Callcontrol from "@/components/callcontrol";
+import { NotificationsProvider } from "@/context/NotificationsProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -121,17 +121,17 @@ export default function RootLayout({
           <SpeakingPageProvider>
             <SocketProvider>
               <PeerProvider>
+                <NotificationsProvider>
+                  <Callcontrol />
+                  {/* <PresenceProvider> */}
+                  <Navigation />
+                  {children}
 
-                <Callcontrol />
-                {/* <PresenceProvider> */}
-                <SpeakingNotificationListener />
-                <Navigation />
-                {children}
+                  <Analytics />
 
-                <Analytics />
-
-                <Footer />
-                {/* </PresenceProvider> */}
+                  <Footer />
+                  {/* </PresenceProvider> */}
+                </NotificationsProvider>
               </PeerProvider>
 
             </SocketProvider>
