@@ -12,10 +12,13 @@ const page = () => {
   const [emailSent, setEmailSent] = useState(false);
 
   useEffect(() => {
-    if (!session) {
-      router.replace("/login");
+    if (!session && !isPending) {
+      const currentPath = window.location.pathname;
+      router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`);
     }
-  }, [session, router]);
+  }, [session, isPending, router]);
+
+
 
   useEffect(() => {
     if (session && !emailSent) {

@@ -62,16 +62,24 @@ export default function LoginPageContent() {
   } = useSession();
 
   useLayoutEffect(() => {
-    if (session) {
-      // Store current path as redirect parameter
-      router.replace(redirectTo);
+    if (session && !isPending) {
+      if (redirectTo) {
+        router.push(redirectTo);
+      } else {
+        router.push("/profile");
+      }
+
     }
-  }, [session, router, redirectTo]);
+  }, [session, router, redirectTo, isPending]);
 
   // Show loading while checking session
   if (isPending) {
     return <Loading />;
   }
+
+ 
+
+  if (session) return null; // Already logged in, no need to show login form
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

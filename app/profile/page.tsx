@@ -293,6 +293,13 @@ export default function ProfilePage() {
   useLayoutEffect(() => {
     if (!session && !isPending) {
       const currentPath = window.location.pathname;
+      const referrer = document.referrer;
+
+      // Don't redirect if user is coming from welcome page
+      if (referrer.includes('/welcome')) {
+        return;
+      }
+
       router.replace(`/login?redirect=${encodeURIComponent(currentPath)}`);
     }
   }, [session, isPending, router]);

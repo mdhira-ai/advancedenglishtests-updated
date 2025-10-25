@@ -38,13 +38,13 @@ const UserStatistics = () => {
                 </div>
             </div>
 
-            <div className="flex items-center space-x-2 rounded-full px-3 py-2">
+            {/* <div className="flex items-center space-x-2 rounded-full px-3 py-2">
                 <MessageSquare className="h-4 w-4 text-orange-600" />
                 <div className="flex items-center  text-center space-x-2">
                     <p className="text-sm font-bold text-orange-700">{userStats.speaking}</p>
                     <p className="text-xs text-orange-600">Speaking</p>
                 </div>
-            </div>
+            </div> */}
         </div>
     );
 }

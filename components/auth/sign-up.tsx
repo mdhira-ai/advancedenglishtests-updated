@@ -166,7 +166,7 @@ export default function SignUp() {
 								password,
 								name: `${firstName} ${lastName}`,
 								image: image ? await convertImageToBase64(image) : "",
-								// callbackURL: "/speaking",
+								// callbackURL: "/welcome",
 								fetchOptions: {
 									onResponse: () => {
 										setLoading(false);
@@ -209,7 +209,7 @@ export default function SignUp() {
 								await signIn.social(
 									{
 										provider: "google",
-										callbackURL: "/speaking",
+										callbackURL: "/profile",
 										newUserCallbackURL: "/welcome",
 
 									},
